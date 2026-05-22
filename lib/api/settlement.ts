@@ -22,7 +22,7 @@ type SettlementRecord = {
   quantity: number;
   privilege_types: { id: string; name: string; unit_price: number | string | null } | Array<{ id: string; name: string; unit_price: number | string | null }> | null;
   profiles: { name: string } | Array<{ name: string }> | null;
-  events: { groups: { name: string } | Array<{ name: string }> | null } | Array<{ groups: { name: string } | Array<{ name: string }> | null }> | null;
+  events: { groups: { name: string; privilege_unit_price: number | string | null } | Array<{ name: string; privilege_unit_price: number | string | null }> | null } | Array<{ groups: { name: string; privilege_unit_price: number | string | null } | Array<{ name: string; privilege_unit_price: number | string | null }> | null }> | null;
 };
 
 type SettlementRate = {
@@ -40,7 +40,7 @@ export async function getSettlementSummary(
   const { data: recordRows, error } = await supabase
     .from("privilege_records")
     .select(
-      "member_id,quantity,privilege_types(id,name,unit_price),profiles!privilege_records_member_id_fkey(name),events!inner(start_at,group_id,groups(name))",
+      "member_id,quantity,privilege_types(id,name,unit_price),profiles!privilege_records_member_id_fkey(name),events!inner(start_at,group_id,groups(name,privilege_unit_price))",
     )
     .gte("events.start_at", start)
     .lt("events.start_at", end);
@@ -73,7 +73,7 @@ export async function getSettlementSummary(
         candidate.privilege_type_id === privilege?.id,
     )?.rate;
 
-    const unitPrice = Number(privilege?.unit_price ?? 0);
+    const unitPrice = Number(group?.privilege_unit_price ?? privilege?.unit_price ?? 0);
     const numericRate = Number(rate ?? 0);
     const amount = Number(record.quantity ?? 0) * unitPrice * numericRate;
 

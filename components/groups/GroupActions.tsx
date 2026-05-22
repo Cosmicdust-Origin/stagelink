@@ -9,16 +9,19 @@ export function GroupActions({
   initialName,
   initialDescription,
   initialDebutDate,
+  initialPrivilegeUnitPrice,
 }: {
   groupId: string;
   initialName: string;
   initialDescription: string;
   initialDebutDate: string;
+  initialPrivilegeUnitPrice: string;
 }) {
   const router = useRouter();
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
   const [debutDate, setDebutDate] = useState(initialDebutDate);
+  const [privilegeUnitPrice, setPrivilegeUnitPrice] = useState(initialPrivilegeUnitPrice);
   const [message, setMessage] = useState("");
 
   async function saveGroup(event: React.FormEvent<HTMLFormElement>) {
@@ -31,6 +34,7 @@ export function GroupActions({
         name,
         description: description || null,
         debut_date: debutDate || null,
+        privilege_unit_price: privilegeUnitPrice ? Number(privilegeUnitPrice) : null,
       }),
     });
     setMessage(response.ok ? "그룹 정보를 저장했습니다." : "그룹 정보를 저장하지 못했습니다.");
@@ -46,7 +50,7 @@ export function GroupActions({
 
   return (
     <form className="mt-4 rounded-lg border border-white/10 bg-[#101114] p-4" onSubmit={saveGroup}>
-      <div className="grid gap-3 md:grid-cols-[1fr_160px_1.5fr_auto_auto]">
+      <div className="grid gap-3 md:grid-cols-[1fr_160px_1.5fr_140px_auto_auto]">
         <label className="text-sm text-zinc-300">
           그룹명
           <input className="mt-2 h-10 w-full rounded-md border border-white/10 bg-white/[0.04] px-3 text-white" value={name} onChange={(event) => setName(event.target.value)} required />
@@ -58,6 +62,13 @@ export function GroupActions({
         <label className="text-sm text-zinc-300">
           설명
           <input className="mt-2 h-10 w-full rounded-md border border-white/10 bg-white/[0.04] px-3 text-white" value={description} onChange={(event) => setDescription(event.target.value)} />
+        </label>
+        <label className="text-sm text-zinc-300">
+          특전권 장당 단가
+          <div className="relative mt-2">
+            <input className="h-10 w-full rounded-md border border-white/10 bg-white/[0.04] pl-3 pr-8 text-white" type="number" min="0" step="100" placeholder="5000" value={privilegeUnitPrice} onChange={(event) => setPrivilegeUnitPrice(event.target.value)} />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400">원</span>
+          </div>
         </label>
         <button className="mt-7 flex h-10 items-center justify-center gap-2 rounded-md bg-[#E8457A] px-4 text-sm font-semibold text-white" type="submit">
           <Save className="h-4 w-4" />

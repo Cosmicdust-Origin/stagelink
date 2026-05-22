@@ -33,6 +33,7 @@ export default async function GroupDetailPage({ params }: Params) {
             initialName={group.name}
             initialDescription={group.description ?? ""}
             initialDebutDate={group.debut_date ?? ""}
+            initialPrivilegeUnitPrice={group.privilege_unit_price != null ? String(group.privilege_unit_price) : ""}
           />
         ) : null}
       </section>
