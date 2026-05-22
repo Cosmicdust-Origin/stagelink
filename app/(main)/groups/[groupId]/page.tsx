@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GroupActions } from "@/components/groups/GroupActions";
 import { MemberManager } from "@/components/groups/MemberManager";
 import { MonthlyBarChart } from "@/components/privileges/MonthlyBarChart";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -26,6 +27,14 @@ export default async function GroupDetailPage({ params }: Params) {
       <section className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
         <h1 className="text-2xl font-semibold text-white">{group?.name}</h1>
         <p className="mt-2 text-sm text-zinc-400">{group?.description ?? "그룹 기본 정보를 관리합니다."}</p>
+        {canEdit && group ? (
+          <GroupActions
+            groupId={groupId}
+            initialName={group.name}
+            initialDescription={group.description ?? ""}
+            initialDebutDate={group.debut_date ?? ""}
+          />
+        ) : null}
       </section>
       <MemberManager groupId={groupId} members={members ?? []} profiles={profiles ?? []} canEdit={canEdit} />
       <section className="grid gap-4 lg:grid-cols-2">

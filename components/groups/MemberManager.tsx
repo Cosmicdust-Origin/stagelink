@@ -69,6 +69,21 @@ export function MemberManager({
     router.refresh();
   }
 
+  async function updatePosition(memberId: string, nextPosition: string) {
+    const response = await fetch(`/api/groups/${groupId}/members/${memberId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ position: nextPosition || null }),
+    });
+
+    if (!response.ok) {
+      setError("포지션을 수정하지 못했습니다.");
+      return;
+    }
+
+    router.refresh();
+  }
+
   return (
     <section className="space-y-3">
       <h2 className="font-semibold text-white">멤버</h2>
@@ -104,7 +119,16 @@ export function MemberManager({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-semibold text-white">{member.profiles?.name ?? "이름 없음"}</p>
-                <p className="mt-1 text-sm text-zinc-400">{member.position ?? "포지션 미정"}</p>
+                {canEdit ? (
+                  <input
+                    className="mt-2 h-9 w-full rounded-md border border-white/10 bg-[#101114] px-2 text-sm text-white"
+                    defaultValue={member.position ?? ""}
+                    placeholder="포지션"
+                    onBlur={(event) => updatePosition(member.user_id, event.target.value)}
+                  />
+                ) : (
+                  <p className="mt-1 text-sm text-zinc-400">{member.position ?? "포지션 미정"}</p>
+                )}
               </div>
               {canEdit ? (
                 <button className="rounded-md p-2 text-zinc-500 hover:bg-red-500/10 hover:text-red-300" type="button" aria-label="멤버 삭제" onClick={() => removeMember(member.user_id)}>
