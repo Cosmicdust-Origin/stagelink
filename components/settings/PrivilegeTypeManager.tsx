@@ -46,9 +46,9 @@ export function PrivilegeTypeManager({ types }: { types: PrivilegeType[] }) {
   return (
     <div className="space-y-4">
       <form className="rounded-lg border border-white/10 bg-[#101114] p-4" onSubmit={createType}>
-        <div className="grid gap-3 md:grid-cols-[1fr_140px_120px_auto]">
+        <div className="flex flex-wrap items-center gap-2">
           <input
-            className="h-10 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white"
+            className="h-10 min-w-[80px] flex-1 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white"
             placeholder="특전명"
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -56,14 +56,14 @@ export function PrivilegeTypeManager({ types }: { types: PrivilegeType[] }) {
           />
           <CategorySelect value={category} onChange={setCategory} />
           <input
-            className="h-10 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white"
+            className="h-10 w-24 shrink-0 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white"
             type="number"
             min="0"
             placeholder="단가"
             value={unitPrice}
             onChange={(event) => setUnitPrice(event.target.value)}
           />
-          <button className="flex h-10 items-center justify-center gap-2 rounded-md bg-[#E8457A] px-4 text-sm font-semibold text-white" type="submit">
+          <button className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-md bg-[#E8457A] px-4 text-sm font-semibold text-white" type="submit">
             <Plus className="h-4 w-4" />
             추가
           </button>
@@ -107,21 +107,19 @@ function PrivilegeTypeRow({ type }: { type: PrivilegeType }) {
   }
 
   return (
-    <div className="grid gap-2 rounded-lg border border-white/10 bg-[#101114] p-3 md:grid-cols-[1fr_140px_120px_90px_auto_auto]">
-      <input className="h-10 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white" value={name} onChange={(event) => setName(event.target.value)} />
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-[#101114] p-3">
+      <input className="h-10 min-w-[80px] flex-1 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white" value={name} onChange={(event) => setName(event.target.value)} />
       <CategorySelect value={category} onChange={setCategory} />
-      <input className="h-10 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white" type="number" min="0" value={unitPrice} onChange={(event) => setUnitPrice(event.target.value)} placeholder="단가" />
-      <label className="flex h-10 items-center gap-2 text-sm text-zinc-300">
+      <input className="h-10 w-24 shrink-0 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white" type="number" min="0" value={unitPrice} onChange={(event) => setUnitPrice(event.target.value)} placeholder="단가" />
+      <label className="flex h-10 shrink-0 items-center gap-2 px-1 text-sm text-zinc-300">
         <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
         사용
       </label>
-      <button className="flex h-10 items-center justify-center gap-2 rounded-md bg-[#E8457A] px-3 text-sm font-semibold text-white" type="button" onClick={saveType}>
+      <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#E8457A] text-white" type="button" onClick={saveType} title="저장">
         <Save className="h-4 w-4" />
-        저장
       </button>
-      <button className="flex h-10 items-center justify-center gap-2 rounded-md border border-red-500/40 px-3 text-sm font-semibold text-red-300" type="button" onClick={deleteType}>
+      <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-red-500/40 text-red-300" type="button" onClick={deleteType} title="삭제">
         <Trash2 className="h-4 w-4" />
-        삭제
       </button>
     </div>
   );
@@ -129,7 +127,7 @@ function PrivilegeTypeRow({ type }: { type: PrivilegeType }) {
 
 function CategorySelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <select className="h-10 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white" value={value} onChange={(event) => onChange(event.target.value)}>
+    <select className="h-10 w-28 shrink-0 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white" value={value} onChange={(event) => onChange(event.target.value)}>
       <option value="on_site">현장</option>
       <option value="event">이벤트</option>
       <option value="mail_order">통판</option>
