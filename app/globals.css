@@ -141,6 +141,10 @@ button:active:not(:disabled) {
   color: #f4f4f5;
   font-size: 1rem;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
 }
 
 /* button group dividers */

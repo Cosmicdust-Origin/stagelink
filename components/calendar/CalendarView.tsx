@@ -21,7 +21,19 @@ export function CalendarView({ events }: { events: EventSummary[] }) {
         headerToolbar={{
           left: "prev,next today",
           center: "title",
-          right: "dayGridMonth,timeGridWeek,listWeek",
+          right: "dayGridMonth,timeGridWeek,upcomingList",
+        }}
+        views={{
+          upcomingList: {
+            type: "list",
+            duration: { months: 6 },
+            buttonText: "목록",
+          },
+        }}
+        buttonText={{ today: "오늘", month: "월", week: "주" }}
+        titleFormat={(arg) => {
+          const d = arg.date.marker;
+          return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}`;
         }}
         height="auto"
         events={events.map((event) => ({

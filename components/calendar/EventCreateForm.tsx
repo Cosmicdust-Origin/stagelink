@@ -54,11 +54,11 @@ export function EventCreateForm({ groups, managers }: { groups: Option[]; manage
   return (
     <form className="rounded-lg border border-white/10 bg-white/[0.04] p-4" onSubmit={createEvent}>
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-        <label className="text-sm text-zinc-300">
+        <label className="min-w-0 text-sm text-zinc-300">
           제목
-          <input className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={title} onChange={(event) => setTitle(event.target.value)} required />
+          <input className="mt-2 h-10 w-full min-w-0 rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={title} onChange={(event) => setTitle(event.target.value)} required />
         </label>
-        <label className="text-sm text-zinc-300">
+        <label className="min-w-0 text-sm text-zinc-300">
           유형
           <select className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={eventType} onChange={(event) => setEventType(event.target.value as EventType)}>
             <option value="live">라이브</option>
@@ -68,35 +68,35 @@ export function EventCreateForm({ groups, managers }: { groups: Option[]; manage
             <option value="other">기타</option>
           </select>
         </label>
-        <label className="text-sm text-zinc-300">
+        <label className="min-w-0 text-sm text-zinc-300">
           그룹
           <select className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={groupId} onChange={(event) => setGroupId(event.target.value)}>
             <option value="">전체</option>
             {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
           </select>
         </label>
-        <label className="text-sm text-zinc-300">
+        <label className="min-w-0 text-sm text-zinc-300">
           현장 담당자
           <select className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={managerId} onChange={(event) => setManagerId(event.target.value)}>
             <option value="">현장 담당자 미지정</option>
             {managers.map((manager) => <option key={manager.id} value={manager.id}>{manager.name}</option>)}
           </select>
         </label>
-        <label className="text-sm text-zinc-300">
+        <label className="min-w-0 text-sm text-zinc-300">
           시작
-          <input className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" type="datetime-local" value={startAt} onChange={(event) => setStartAt(event.target.value)} required />
+          <input className="mt-2 h-10 w-full min-w-0 rounded-md border border-white/10 bg-[#101114] px-3 text-white" type="datetime-local" value={startAt} onChange={(event) => setStartAt(event.target.value)} required />
         </label>
-        <label className="text-sm text-zinc-300">
+        <label className="min-w-0 text-sm text-zinc-300">
           종료
-          <input className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" type="datetime-local" value={endAt} onChange={(event) => setEndAt(event.target.value)} />
+          <input className="mt-2 h-10 w-full min-w-0 rounded-md border border-white/10 bg-[#101114] px-3 text-white" type="datetime-local" value={endAt} onChange={(event) => setEndAt(event.target.value)} />
         </label>
-        <label className="text-sm text-zinc-300">
+        <label className="min-w-0 text-sm text-zinc-300">
           장소
-          <input className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={venue} onChange={(event) => setVenue(event.target.value)} />
+          <input className="mt-2 h-10 w-full min-w-0 rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={venue} onChange={(event) => setVenue(event.target.value)} />
         </label>
-        <label className="text-sm text-zinc-300">
+        <label className="min-w-0 text-sm text-zinc-300">
           메모
-          <input className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={memo} onChange={(event) => setMemo(event.target.value)} />
+          <input className="mt-2 h-10 w-full min-w-0 rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={memo} onChange={(event) => setMemo(event.target.value)} />
         </label>
       </div>
       <button className="mt-4 flex h-10 items-center gap-2 rounded-md bg-[#E8457A] px-4 text-sm font-semibold text-white" type="submit">
