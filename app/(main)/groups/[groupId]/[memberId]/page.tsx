@@ -11,7 +11,11 @@ export default async function MemberDetailPage({ params }: Params) {
     supabase.from("privilege_records").select("quantity, recorded_at, privilege_types(name)").eq("member_id", memberId).limit(30),
   ]);
 
-  const chartData = (records ?? []).map((record) => ({ month: record.recorded_at.slice(5, 10), total: record.quantity }));
+  const memberName = member?.name ?? "멤버";
+  const chartData = (records ?? []).map((record) => ({
+    date: record.recorded_at.slice(5, 10),
+    [memberName]: record.quantity,
+  }));
 
   return (
     <div className="space-y-5">
@@ -19,7 +23,11 @@ export default async function MemberDetailPage({ params }: Params) {
         <h1 className="text-2xl font-semibold text-white">{member?.name}</h1>
         <p className="mt-2 text-sm text-zinc-400">{member?.phone ?? "연락처 없음"}</p>
       </section>
-      <TrendLineChart data={chartData.length ? chartData : [{ month: "이번달", total: 0 }]} />
+      <TrendLineChart
+        title="특전 등록 이력"
+        description="날짜별 특전 수량"
+        data={chartData.length ? chartData : [{ date: "-", [memberName]: 0 }]}
+      />
     </div>
   );
 }
