@@ -26,6 +26,13 @@ textarea {
   outline-color: #e8457a;
 }
 
+input[type="datetime-local"],
+input[type="date"],
+input[type="month"],
+input[type="time"] {
+  color-scheme: dark;
+}
+
 select option {
   background: #ffffff;
   color: #111827;
@@ -79,9 +86,32 @@ button:active:not(:disabled) {
   text-decoration: none;
 }
 
+.fc-dark .fc-col-header-cell-cushion {
+  font-size: 0.7rem;
+  padding: 4px 2px;
+}
+
+.fc-dark .fc-daygrid-day-number {
+  font-size: 0.7rem;
+  padding: 3px 5px;
+}
+
 .fc-dark .fc-daygrid-day-number:hover,
 .fc-dark .fc-col-header-cell-cushion:hover {
   color: #f4f4f5;
+}
+
+/* prevent event text from overflowing cells */
+.fc-dark .fc-daygrid-event {
+  overflow: hidden;
+}
+
+.fc-dark .fc-event-title,
+.fc-dark .fc-event-time {
+  font-size: 0.65rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* scrollgrid cells */
