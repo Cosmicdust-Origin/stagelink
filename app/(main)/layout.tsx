@@ -20,7 +20,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
         <Header />
         <main className="mx-auto w-full max-w-7xl px-4 py-6 md:px-6">{children}</main>
       </div>
-      <MobileNav />
+      <MobileNav role={profile?.role} />
       <Toaster />
     </div>
   );
