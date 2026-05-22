@@ -14,11 +14,22 @@ type GroupMember = {
   id: string;
   user_id: string;
   position: string | null;
+  contract_start_date: string | null;
+  contract_duration_months: number | null;
   profiles: {
     name: string;
     role: string;
   } | null;
 };
+
+function daysUntilRenewal(startDate: string | null, months: number | null): number | null {
+  if (!startDate || !months) return null;
+  const renewal = new Date(startDate);
+  renewal.setMonth(renewal.getMonth() + months);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.ceil((renewal.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
 
 export function MemberManager({
   groupId,
@@ -69,15 +80,15 @@ export function MemberManager({
     router.refresh();
   }
 
-  async function updatePosition(memberId: string, nextPosition: string) {
+  async function patchMember(memberId: string, patch: Record<string, unknown>) {
     const response = await fetch(`/api/groups/${groupId}/members/${memberId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ position: nextPosition || null }),
+      body: JSON.stringify(patch),
     });
 
     if (!response.ok) {
-      setError("포지션을 수정하지 못했습니다.");
+      setError("정보를 수정하지 못했습니다.");
       return;
     }
 
@@ -93,7 +104,7 @@ export function MemberManager({
             <label className="text-sm text-zinc-300">
               계정
               <select className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={userId} onChange={(event) => setUserId(event.target.value)} required>
-                <option value="">멤버 선택</option>
+                <option value="">선택</option>
                 {addableProfiles.map((profile) => (
                   <option key={profile.id} value={profile.id}>
                     {profile.name} ({profile.role})
@@ -114,30 +125,65 @@ export function MemberManager({
         </form>
       ) : null}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {members.map((member) => (
-          <article key={member.id} className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-semibold text-white">{member.profiles?.name ?? "이름 없음"}</p>
+        {members.map((member) => {
+          const days = daysUntilRenewal(member.contract_start_date, member.contract_duration_months);
+          const renewalColor = days === null ? "" : days < 0 ? "text-red-400" : days <= 30 ? "text-amber-400" : "text-zinc-500";
+          const renewalMessage = days === null ? null : days < 0
+            ? `계약 갱신일이 ${-days}일 지났습니다`
+            : `계약 갱신일까지 ${days}일 남았습니다`;
+
+          return (
+            <article key={member.id} className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-white">{member.profiles?.name ?? "이름 없음"}</p>
+                  {canEdit ? (
+                    <input
+                      className="mt-2 h-9 w-full rounded-md border border-white/10 bg-[#101114] px-2 text-sm text-white"
+                      defaultValue={member.position ?? ""}
+                      placeholder="포지션"
+                      onBlur={(event) => patchMember(member.user_id, { position: event.target.value || null })}
+                    />
+                  ) : (
+                    <p className="mt-1 text-sm text-zinc-400">{member.position ?? "포지션 미정"}</p>
+                  )}
+                  {canEdit ? (
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <label className="text-xs text-zinc-400">
+                        계약 시행일
+                        <input
+                          className="mt-1 h-8 w-full rounded-md border border-white/10 bg-[#101114] px-2 text-xs text-white"
+                          type="date"
+                          defaultValue={member.contract_start_date ?? ""}
+                          onBlur={(event) => patchMember(member.user_id, { contract_start_date: event.target.value || null })}
+                        />
+                      </label>
+                      <label className="text-xs text-zinc-400">
+                        계약 기간 (개월)
+                        <input
+                          className="mt-1 h-8 w-full rounded-md border border-white/10 bg-[#101114] px-2 text-xs text-white"
+                          type="number"
+                          min="1"
+                          placeholder="12"
+                          defaultValue={member.contract_duration_months ?? ""}
+                          onBlur={(event) => patchMember(member.user_id, { contract_duration_months: event.target.value ? Number(event.target.value) : null })}
+                        />
+                      </label>
+                    </div>
+                  ) : null}
+                </div>
                 {canEdit ? (
-                  <input
-                    className="mt-2 h-9 w-full rounded-md border border-white/10 bg-[#101114] px-2 text-sm text-white"
-                    defaultValue={member.position ?? ""}
-                    placeholder="포지션"
-                    onBlur={(event) => updatePosition(member.user_id, event.target.value)}
-                  />
-                ) : (
-                  <p className="mt-1 text-sm text-zinc-400">{member.position ?? "포지션 미정"}</p>
-                )}
+                  <button className="rounded-md p-2 text-zinc-500 hover:bg-red-500/10 hover:text-red-300" type="button" aria-label="멤버 삭제" onClick={() => removeMember(member.user_id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                ) : null}
               </div>
-              {canEdit ? (
-                <button className="rounded-md p-2 text-zinc-500 hover:bg-red-500/10 hover:text-red-300" type="button" aria-label="멤버 삭제" onClick={() => removeMember(member.user_id)}>
-                  <Trash2 className="h-4 w-4" />
-                </button>
+              {renewalMessage ? (
+                <p className={`mt-3 border-t border-white/5 pt-3 text-xs ${renewalColor}`}>{renewalMessage}</p>
               ) : null}
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
     </section>
   );
