@@ -1,3 +1,4 @@
+import { EventActions } from "@/components/calendar/EventActions";
 import { PrivilegeInputTable } from "@/components/calendar/PrivilegeInputTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -30,6 +31,7 @@ export default async function EventDetailPage({ params }: Params) {
         <p className="text-sm text-zinc-400">{event?.groups?.name ?? "전체"} · {event?.venue ?? "장소 미정"}</p>
         <h1 className="mt-2 text-2xl font-semibold text-white">{event?.title ?? "이벤트"}</h1>
         {event ? <p className="mt-2 text-sm text-zinc-400">{formatDate(event.start_at)} - {formatDate(event.end_at)}</p> : null}
+        {canEdit && event ? <EventActions eventId={eventId} initialTitle={event.title} initialVenue={event.venue ?? ""} initialMemo={event.memo ?? ""} /> : null}
       </section>
       <section className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
