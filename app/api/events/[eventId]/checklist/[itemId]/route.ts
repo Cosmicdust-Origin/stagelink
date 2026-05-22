@@ -2,6 +2,18 @@ import { handleApiError, json, parseJson, requireRole } from "@/lib/api/auth";
 
 type Params = { params: Promise<{ itemId: string }> };
 
+export async function DELETE(_: Request, { params }: Params) {
+  try {
+    const { itemId } = await params;
+    const { supabase } = await requireRole(["admin", "manager"]);
+    const { error } = await supabase.from("event_checklists").delete().eq("id", itemId);
+    if (error) throw error;
+    return json({ success: true });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { itemId } = await params;

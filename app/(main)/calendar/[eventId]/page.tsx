@@ -1,6 +1,7 @@
+import { ChecklistPanel } from "@/components/calendar/ChecklistPanel";
 import { EventActions } from "@/components/calendar/EventActions";
 import { PrivilegeInputTable } from "@/components/calendar/PrivilegeInputTable";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { TimetablePanel } from "@/components/calendar/TimetablePanel";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 
@@ -12,7 +13,7 @@ export default async function EventDetailPage({ params }: Params) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [{ data: event }, { data: checklist }, { data: timetable }, { data: types }, { data: records }, { data: members }, { data: profile }] =
+  const [{ data: event }, { data: checklist }, { data: timetable }, { data: types }, { data: records }, { data: members }, { data: profile }, { data: groups }] =
     await Promise.all([
       supabase.from("events").select("*, groups(name), profiles!events_manager_id_fkey(name)").eq("id", eventId).single(),
       supabase.from("event_checklists").select("*").eq("event_id", eventId).order("sort_order"),
@@ -21,6 +22,7 @@ export default async function EventDetailPage({ params }: Params) {
       supabase.from("privilege_records").select("*").eq("event_id", eventId),
       supabase.from("profiles").select("*").eq("role", "member").order("name"),
       user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
+      supabase.from("groups").select("id,name").order("name"),
     ]);
 
   const canEdit = profile?.role === "admin" || profile?.role === "manager";
@@ -34,18 +36,8 @@ export default async function EventDetailPage({ params }: Params) {
         {canEdit && event ? <EventActions eventId={eventId} initialTitle={event.title} initialVenue={event.venue ?? ""} initialMemo={event.memo ?? ""} /> : null}
       </section>
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-          <h2 className="font-semibold text-white">체크리스트</h2>
-          <div className="mt-3 space-y-2">
-            {checklist?.length ? checklist.map((item) => <div key={item.id} className="flex items-center gap-2 text-sm text-zinc-300"><span className={item.is_checked ? "text-[#27AE60]" : "text-zinc-500"}>{item.is_checked ? "완료" : "대기"}</span>{item.label}</div>) : <EmptyState title="체크리스트가 없습니다" />}
-          </div>
-        </div>
-        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-          <h2 className="font-semibold text-white">타임테이블</h2>
-          <div className="mt-3 space-y-2">
-            {timetable?.length ? timetable.map((entry) => <div key={entry.id} className="flex justify-between rounded-md bg-white/[0.04] px-3 py-2 text-sm text-zinc-300"><span>{entry.start_time}</span><span>{entry.groups?.name ?? "전체"} · {entry.set_count ?? "-"}세트</span></div>) : <EmptyState title="타임테이블이 없습니다" />}
-          </div>
-        </div>
+        <ChecklistPanel eventId={eventId} items={checklist ?? []} canEdit={canEdit} />
+        <TimetablePanel eventId={eventId} entries={timetable ?? []} groups={groups ?? []} canEdit={canEdit} />
       </section>
       <section className="space-y-3">
         <h2 className="font-semibold text-white">특전 수량</h2>
