@@ -3,12 +3,14 @@
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToastStore } from "@/lib/toast";
 
 type Option = { id: string; name: string };
 type PrivilegeTypeOption = Option & { unit_price?: number | null };
 
 export function PrivilegeTypeCreateForm() {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("on_site");
   const [unitPrice, setUnitPrice] = useState("");
@@ -22,7 +24,10 @@ export function PrivilegeTypeCreateForm() {
     });
     if (response.ok) {
       setName("");
+      toast("특전 등록 완료!");
       router.refresh();
+    } else {
+      toast("등록 실패", "error");
     }
   }
 
@@ -57,6 +62,7 @@ export function PrivilegeRecordCreateForm({
   types: PrivilegeTypeOption[];
 }) {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [eventId, setEventId] = useState("");
   const [memberId, setMemberId] = useState("");
   const [typeId, setTypeId] = useState("");
@@ -69,7 +75,12 @@ export function PrivilegeRecordCreateForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ records: [{ member_id: memberId, privilege_type_id: typeId, quantity: Number(quantity) }] }),
     });
-    if (response.ok) router.refresh();
+    if (response.ok) {
+      toast("수량 등록 완료!");
+      router.refresh();
+    } else {
+      toast("등록 실패", "error");
+    }
   }
 
   return (

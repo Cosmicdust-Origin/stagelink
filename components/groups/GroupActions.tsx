@@ -3,6 +3,7 @@
 import { Save, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToastStore } from "@/lib/toast";
 
 export function GroupActions({
   groupId,
@@ -18,15 +19,14 @@ export function GroupActions({
   initialPrivilegeUnitPrice: string;
 }) {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
   const [debutDate, setDebutDate] = useState(initialDebutDate);
   const [privilegeUnitPrice, setPrivilegeUnitPrice] = useState(initialPrivilegeUnitPrice);
-  const [message, setMessage] = useState("");
 
   async function saveGroup(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("");
     const response = await fetch(`/api/groups/${groupId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -37,15 +37,19 @@ export function GroupActions({
         privilege_unit_price: privilegeUnitPrice ? Number(privilegeUnitPrice) : null,
       }),
     });
-    setMessage(response.ok ? "그룹 정보를 저장했습니다." : "그룹 정보를 저장하지 못했습니다.");
-    router.refresh();
+    if (response.ok) {
+      toast("저장 완료!");
+      router.refresh();
+    } else {
+      toast("저장 실패", "error");
+    }
   }
 
   async function deleteGroup() {
     if (!window.confirm("이 그룹을 삭제할까요? 연결된 멤버 배정도 함께 삭제됩니다.")) return;
     const response = await fetch(`/api/groups/${groupId}`, { method: "DELETE" });
     if (response.ok) router.push("/groups");
-    else setMessage("그룹을 삭제하지 못했습니다.");
+    else toast("삭제 실패", "error");
   }
 
   return (
@@ -79,7 +83,6 @@ export function GroupActions({
           삭제
         </button>
       </div>
-      {message ? <p className="mt-3 text-sm text-zinc-300">{message}</p> : null}
     </form>
   );
 }

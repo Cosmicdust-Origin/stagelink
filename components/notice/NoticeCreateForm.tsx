@@ -3,11 +3,13 @@
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToastStore } from "@/lib/toast";
 
 type Group = { id: string; name: string };
 
 export function NoticeCreateForm({ groups }: { groups: Group[] }) {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [targetGroupId, setTargetGroupId] = useState("");
@@ -23,7 +25,10 @@ export function NoticeCreateForm({ groups }: { groups: Group[] }) {
     if (response.ok) {
       setTitle("");
       setContent("");
+      toast("공지 등록 완료!");
       router.refresh();
+    } else {
+      toast("등록 실패", "error");
     }
   }
 

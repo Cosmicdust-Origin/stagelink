@@ -3,12 +3,13 @@
 import { Plus, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToastStore } from "@/lib/toast";
 
 export function InviteUserForm() {
+  const toast = useToastStore((s) => s.show);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState<"manager" | "member">("member");
-  const [message, setMessage] = useState("");
 
   async function invite(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -17,7 +18,13 @@ export function InviteUserForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, name, role }),
     });
-    setMessage(response.ok ? "초대를 보냈습니다." : "초대를 보내지 못했습니다.");
+    if (response.ok) {
+      setEmail("");
+      setName("");
+      toast("초대 발송 완료!");
+    } else {
+      toast("초대 발송 실패", "error");
+    }
   }
 
   return (
@@ -32,13 +39,13 @@ export function InviteUserForm() {
         <Send className="h-4 w-4" />
         초대 발송
       </button>
-      {message ? <p className="text-sm text-zinc-400">{message}</p> : null}
     </form>
   );
 }
 
 export function ChecklistTemplateForm() {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [label, setLabel] = useState("");
   const [isDefault, setIsDefault] = useState(true);
 
@@ -51,7 +58,10 @@ export function ChecklistTemplateForm() {
     });
     if (response.ok) {
       setLabel("");
+      toast("템플릿 등록 완료!");
       router.refresh();
+    } else {
+      toast("등록 실패", "error");
     }
   }
 

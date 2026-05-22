@@ -3,11 +3,13 @@
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToastStore } from "@/lib/toast";
 
 type Option = { id: string; name: string };
 
 export function RateCreateForm({ members, types }: { members: Option[]; types: Option[] }) {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [memberId, setMemberId] = useState("");
   const [typeId, setTypeId] = useState("");
   const [ratePercent, setRatePercent] = useState("70");
@@ -20,7 +22,12 @@ export function RateCreateForm({ members, types }: { members: Option[]; types: O
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ member_id: memberId, privilege_type_id: typeId, rate: Number(ratePercent) / 100, valid_from: validFrom }),
     });
-    if (response.ok) router.refresh();
+    if (response.ok) {
+      toast("비율 등록 완료!");
+      router.refresh();
+    } else {
+      toast("등록 실패", "error");
+    }
   }
 
   return (

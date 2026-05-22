@@ -3,12 +3,14 @@
 import { CalendarPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToastStore } from "@/lib/toast";
 import type { EventType } from "@/lib/types";
 
 type Option = { id: string; name: string };
 
 export function EventCreateForm({ groups, managers }: { groups: Option[]; managers: Option[] }) {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [title, setTitle] = useState("");
   const [eventType, setEventType] = useState<EventType>("live");
   const [groupId, setGroupId] = useState("");
@@ -17,12 +19,9 @@ export function EventCreateForm({ groups, managers }: { groups: Option[]; manage
   const [endAt, setEndAt] = useState("");
   const [managerId, setManagerId] = useState("");
   const [memo, setMemo] = useState("");
-  const [message, setMessage] = useState("");
 
   async function createEvent(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("");
-
     const response = await fetch("/api/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -39,7 +38,7 @@ export function EventCreateForm({ groups, managers }: { groups: Option[]; manage
     });
 
     if (!response.ok) {
-      setMessage("일정을 등록하지 못했습니다.");
+      toast("일정 등록 실패", "error");
       return;
     }
 
@@ -48,6 +47,7 @@ export function EventCreateForm({ groups, managers }: { groups: Option[]; manage
     setStartAt("");
     setEndAt("");
     setMemo("");
+    toast("일정 등록 완료!");
     router.refresh();
   }
 
@@ -103,7 +103,6 @@ export function EventCreateForm({ groups, managers }: { groups: Option[]; manage
         <CalendarPlus className="h-4 w-4" />
         일정 등록
       </button>
-      {message ? <p className="mt-3 text-sm text-zinc-300">{message}</p> : null}
     </form>
   );
 }

@@ -3,6 +3,7 @@
 import { Save, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToastStore } from "@/lib/toast";
 
 export function NoticeActions({
   noticeId,
@@ -14,6 +15,7 @@ export function NoticeActions({
   initialContent: string;
 }) {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [title, setTitle] = useState(initialTitle);
   const [content, setContent] = useState(initialContent);
 
@@ -24,13 +26,19 @@ export function NoticeActions({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, content }),
     });
-    if (response.ok) router.refresh();
+    if (response.ok) {
+      toast("저장 완료!");
+      router.refresh();
+    } else {
+      toast("저장 실패", "error");
+    }
   }
 
   async function remove() {
     if (!window.confirm("이 공지를 삭제할까요?")) return;
     const response = await fetch(`/api/notices/${noticeId}`, { method: "DELETE" });
     if (response.ok) router.push("/notice");
+    else toast("삭제 실패", "error");
   }
 
   return (

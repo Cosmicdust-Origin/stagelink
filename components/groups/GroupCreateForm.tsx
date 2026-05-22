@@ -3,19 +3,19 @@
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToastStore } from "@/lib/toast";
 
 export function GroupCreateForm() {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [name, setName] = useState("");
   const [debutDate, setDebutDate] = useState("");
   const [description, setDescription] = useState("");
   const [privilegeUnitPrice, setPrivilegeUnitPrice] = useState("");
-  const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
     setIsSaving(true);
 
     const response = await fetch("/api/groups", {
@@ -32,7 +32,7 @@ export function GroupCreateForm() {
     setIsSaving(false);
 
     if (!response.ok) {
-      setError("그룹을 추가하지 못했습니다.");
+      toast("그룹 추가 실패", "error");
       return;
     }
 
@@ -40,6 +40,7 @@ export function GroupCreateForm() {
     setDebutDate("");
     setDescription("");
     setPrivilegeUnitPrice("");
+    toast("그룹 추가 완료!");
     router.refresh();
   }
 
@@ -70,7 +71,6 @@ export function GroupCreateForm() {
           추가
         </button>
       </div>
-      {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
     </form>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useToastStore } from "@/lib/toast";
 import type { PrivilegeRecord, PrivilegeType, Profile } from "@/lib/types";
 
 type PrivilegeInputTableProps = {
@@ -20,6 +21,7 @@ export function PrivilegeInputTable({
   canEdit,
   currentUserId,
 }: PrivilegeInputTableProps) {
+  const toast = useToastStore((s) => s.show);
   const [values, setValues] = useState(() => {
     const initial: Record<string, number> = {};
     records.forEach((record) => {
@@ -44,11 +46,13 @@ export function PrivilegeInputTable({
       return { member_id, privilege_type_id, quantity };
     });
 
-    await fetch(`/api/events/${eventId}/privileges`, {
+    const response = await fetch(`/api/events/${eventId}/privileges`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ records: payload }),
     });
+    if (response.ok) toast("수량 저장 완료!");
+    else toast("저장 실패", "error");
   }
 
   return (
