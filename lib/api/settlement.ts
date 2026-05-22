@@ -10,6 +10,7 @@ type SupabaseLike = {
 type QueryResult<T> = { data: T[] | null; error: Error | null };
 
 type QueryBuilder = PromiseLike<QueryResult<SettlementRecord | SettlementRate>> & {
+  eq: (column: string, value: string) => QueryBuilder;
   gte: (column: string, value: string) => QueryBuilder;
   lt: (column: string, value: string) => QueryBuilder;
   lte: (column: string, value: string) => QueryBuilder;
@@ -34,28 +35,39 @@ type SettlementRate = {
 export async function getSettlementSummary(
   supabase: SupabaseLike,
   month: string,
+  workspaceId?: string,
 ): Promise<SettlementMemberSummary[]> {
   const { start, end } = monthRange(month);
 
-  const { data: recordRows, error } = await supabase
+  let recordQuery = supabase
     .from("privilege_records")
     .select(
-      "member_id,quantity,privilege_types(id,name,unit_price),profiles!privilege_records_member_id_fkey(name),events!inner(title,start_at,group_id,groups(name))",
+      "member_id,quantity,privilege_types(id,name,unit_price),profiles!privilege_records_member_id_fkey(name),events!inner(title,start_at,group_id,workspace_id,groups(name))",
     )
     .gte("events.start_at", start)
     .lt("events.start_at", end);
-  const records = recordRows as SettlementRecord[] | null;
 
+  if (workspaceId) {
+    recordQuery = recordQuery.eq("events.workspace_id", workspaceId);
+  }
+
+  const { data: recordRows, error } = await recordQuery;
+  const records = recordRows as SettlementRecord[] | null;
   if (error) throw error;
 
-  const { data: rateRows, error: ratesError } = await supabase
+  let rateQuery = supabase
     .from("settlement_rates")
-    .select("member_id,privilege_type_id,rate,valid_from,valid_until")
+    .select("member_id,privilege_type_id,rate,valid_from,valid_until,workspace_id")
     .lte("valid_from", `${month}-31`)
     .or(`valid_until.is.null,valid_until.gte.${month}-01`)
     .order("valid_from", { ascending: false });
-  const rates = rateRows as SettlementRate[] | null;
 
+  if (workspaceId) {
+    rateQuery = rateQuery.eq("workspace_id", workspaceId);
+  }
+
+  const { data: rateRows, error: ratesError } = await rateQuery;
+  const rates = rateRows as SettlementRate[] | null;
   if (ratesError) throw ratesError;
 
   const grouped = new Map<string, SettlementMemberSummary>();

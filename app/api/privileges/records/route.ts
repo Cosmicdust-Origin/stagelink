@@ -1,9 +1,13 @@
 import { monthRange } from "@/lib/utils";
 import { handleApiError, json, requireUser } from "@/lib/api/auth";
+import { getWorkspaceId } from "@/lib/workspace";
 
 export async function GET(request: Request) {
   try {
     const { supabase, user, profile } = await requireUser();
+    const wsId = await getWorkspaceId(supabase, user.id);
+    if (!wsId) return json({ records: [], total_by_type: {} });
+
     const { searchParams } = new URL(request.url);
     const month = searchParams.get("month");
     const memberId = searchParams.get("member_id");
@@ -11,7 +15,10 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("privilege_records")
-      .select("*, privilege_types(name,category), events!inner(start_at,group_id,title), profiles!privilege_records_member_id_fkey(name)")
+      .select(
+        "*, privilege_types(name,category), events!inner(start_at,group_id,title,workspace_id), profiles!privilege_records_member_id_fkey(name)",
+      )
+      .eq("events.workspace_id", wsId)
       .order("recorded_at", { ascending: false });
 
     if (month) {

@@ -1,12 +1,19 @@
 import { handleApiError, json, parseJson, requireRole, requireUser } from "@/lib/api/auth";
+import { getWorkspaceId } from "@/lib/workspace";
 
 export async function GET() {
   try {
-    const { supabase, profile } = await requireUser();
-    const table = profile.role === "admin" ? "privilege_types" : "privilege_types_public";
+    const { supabase, user, profile } = await requireUser();
+    const wsId = await getWorkspaceId(supabase, user.id);
+    if (!wsId) return json({ types: [] });
+
+    // Admin sees unit_price; others do not
+    const select = profile.role === "admin" ? "*" : "id,name,category,is_active,created_at";
+
     const { data, error } = await supabase
-      .from(table)
-      .select("*")
+      .from("privilege_types")
+      .select(select)
+      .eq("workspace_id", wsId)
       .eq("is_active", true)
       .order("created_at");
 
@@ -20,10 +27,13 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { supabase, user } = await requireRole(["admin"]);
+    const wsId = await getWorkspaceId(supabase, user.id);
+    if (!wsId) return json({ error: "워크스페이스 없음" }, 400);
+
     const body = await parseJson<Record<string, unknown>>(request);
     const { data, error } = await supabase
       .from("privilege_types")
-      .insert({ ...body, created_by: user.id })
+      .insert({ ...body, created_by: user.id, workspace_id: wsId })
       .select("*")
       .single();
 

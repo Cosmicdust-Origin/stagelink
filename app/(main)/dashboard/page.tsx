@@ -2,6 +2,7 @@ import Link from "next/link";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getWorkspaceId } from "@/lib/workspace";
 import { formatDate } from "@/lib/utils";
 
 const compactListItemClass =
@@ -9,27 +10,49 @@ const compactListItemClass =
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const wsId = user ? await getWorkspaceId(supabase, user.id) : null;
+
   const now = new Date();
   const nextWeek = new Date(now);
   nextWeek.setDate(now.getDate() + 7);
 
-  const [{ data: events }, { data: tasks }, { data: notices }, { count: groupCount }] = await Promise.all([
-    supabase
-      .from("events")
-      .select("id,title,start_at,venue")
-      .gte("start_at", now.toISOString())
-      .lte("start_at", nextWeek.toISOString())
-      .order("start_at")
-      .limit(5),
-    supabase
-      .from("tasks")
-      .select("id,title,due_date,status")
-      .neq("status", "done")
-      .order("due_date", { ascending: true, nullsFirst: false })
-      .limit(5),
-    supabase.from("notices").select("id,title,created_at").order("created_at", { ascending: false }).limit(3),
-    supabase.from("groups").select("*", { count: "exact", head: true }),
-  ]);
+  const [{ data: events }, { data: tasks }, { data: notices }, { count: groupCount }] =
+    await Promise.all([
+      wsId
+        ? supabase
+            .from("events")
+            .select("id,title,start_at,venue")
+            .eq("workspace_id", wsId)
+            .gte("start_at", now.toISOString())
+            .lte("start_at", nextWeek.toISOString())
+            .order("start_at")
+            .limit(5)
+        : Promise.resolve({ data: [] }),
+      wsId
+        ? supabase
+            .from("tasks")
+            .select("id,title,due_date,status")
+            .eq("workspace_id", wsId)
+            .neq("status", "done")
+            .order("due_date", { ascending: true, nullsFirst: false })
+            .limit(5)
+        : Promise.resolve({ data: [] }),
+      wsId
+        ? supabase
+            .from("notices")
+            .select("id,title,created_at")
+            .eq("workspace_id", wsId)
+            .order("created_at", { ascending: false })
+            .limit(3)
+        : Promise.resolve({ data: [] }),
+      wsId
+        ? supabase.from("groups").select("*", { count: "exact", head: true }).eq("workspace_id", wsId)
+        : Promise.resolve({ count: 0 }),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -45,7 +68,11 @@ export default async function DashboardPage() {
           <div className="mt-4 space-y-3">
             {events?.length ? (
               events.map((event) => (
-                <Link key={event.id} href={`/calendar/${event.id}`} className="block rounded-md border border-white/10 p-3 hover:bg-white/[0.04]">
+                <Link
+                  key={event.id}
+                  href={`/calendar/${event.id}`}
+                  className="block rounded-md border border-white/10 p-3 hover:bg-white/[0.04]"
+                >
                   <p className="font-medium text-white">{event.title}</p>
                   <p className="text-sm text-zinc-400">
                     {formatDate(event.start_at)} · {event.venue ?? "장소 미정"}
@@ -81,7 +108,11 @@ export default async function DashboardPage() {
               {notices?.length ? (
                 <div className="space-y-1.5">
                   {notices.map((notice) => (
-                    <Link key={notice.id} href={`/notice/${notice.id}`} className={`${compactListItemClass} hover:bg-white/[0.06] hover:text-white`}>
+                    <Link
+                      key={notice.id}
+                      href={`/notice/${notice.id}`}
+                      className={`${compactListItemClass} hover:bg-white/[0.06] hover:text-white`}
+                    >
                       {notice.title}
                     </Link>
                   ))}

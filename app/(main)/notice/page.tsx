@@ -2,17 +2,29 @@ import Link from "next/link";
 import { NoticeCreateForm } from "@/components/notice/NoticeCreateForm";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getWorkspaceId } from "@/lib/workspace";
 import { formatDate } from "@/lib/utils";
 
 export default async function NoticePage() {
   const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const wsId = user ? await getWorkspaceId(supabase, user.id) : null;
+
   const [{ data: notices }, { data: groups }] = await Promise.all([
-    supabase
-      .from("notices")
-      .select("*, profiles!notices_author_id_fkey(name)")
-      .order("is_pinned", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase.from("groups").select("id,name").order("name"),
+    wsId
+      ? supabase
+          .from("notices")
+          .select("*, profiles!notices_author_id_fkey(name)")
+          .eq("workspace_id", wsId)
+          .order("is_pinned", { ascending: false })
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    wsId
+      ? supabase.from("groups").select("id,name").eq("workspace_id", wsId).order("name")
+      : Promise.resolve({ data: [] }),
   ]);
 
   return (
@@ -25,12 +37,22 @@ export default async function NoticePage() {
       <div className="space-y-3">
         {notices?.length ? (
           notices.map((notice) => (
-            <Link key={notice.id} href={`/notice/${notice.id}`} className="block rounded-lg border border-white/10 bg-white/[0.04] p-4 hover:bg-white/[0.07]">
+            <Link
+              key={notice.id}
+              href={`/notice/${notice.id}`}
+              className="block rounded-lg border border-white/10 bg-white/[0.04] p-4 hover:bg-white/[0.07]"
+            >
               <div className="flex items-center gap-2">
-                {notice.is_pinned ? <span className="rounded bg-[#E8457A]/20 px-2 py-1 text-xs text-[#ff8fb1]">고정</span> : null}
+                {notice.is_pinned ? (
+                  <span className="rounded bg-[#E8457A]/20 px-2 py-1 text-xs text-[#ff8fb1]">
+                    고정
+                  </span>
+                ) : null}
                 <p className="font-semibold text-white">{notice.title}</p>
               </div>
-              <p className="mt-2 text-sm text-zinc-400">{notice.profiles?.name ?? "작성자"} · {formatDate(notice.created_at)}</p>
+              <p className="mt-2 text-sm text-zinc-400">
+                {notice.profiles?.name ?? "작성자"} · {formatDate(notice.created_at)}
+              </p>
             </Link>
           ))
         ) : (

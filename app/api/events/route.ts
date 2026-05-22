@@ -1,5 +1,6 @@
 import { monthRange } from "@/lib/utils";
 import { handleApiError, json, parseJson, requireRole, requireUser } from "@/lib/api/auth";
+import { getWorkspaceId } from "@/lib/workspace";
 
 type EventBody = {
   title: string;
@@ -15,7 +16,10 @@ type EventBody = {
 
 export async function GET(request: Request) {
   try {
-    const { supabase } = await requireUser();
+    const { supabase, user } = await requireUser();
+    const wsId = await getWorkspaceId(supabase, user.id);
+    if (!wsId) return json({ events: [] });
+
     const { searchParams } = new URL(request.url);
     const month = searchParams.get("month");
     const groupId = searchParams.get("group_id");
@@ -23,6 +27,7 @@ export async function GET(request: Request) {
     let query = supabase
       .from("events")
       .select("id,title,event_type,group_id,venue,start_at,end_at")
+      .eq("workspace_id", wsId)
       .order("start_at");
 
     if (month) {
@@ -42,12 +47,15 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { supabase, user } = await requireRole(["admin", "manager"]);
+    const wsId = await getWorkspaceId(supabase, user.id);
+    if (!wsId) return json({ error: "워크스페이스 없음" }, 400);
+
     const body = await parseJson<EventBody>(request);
     const { checklist_template_ids: checklistTemplateIds, ...eventPayload } = body;
 
     const { data: event, error } = await supabase
       .from("events")
-      .insert({ ...eventPayload, created_by: user.id })
+      .insert({ ...eventPayload, created_by: user.id, workspace_id: wsId })
       .select("*")
       .single();
     if (error) throw error;

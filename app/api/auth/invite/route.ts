@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { handleApiError, json, parseJson, requireRole } from "@/lib/api/auth";
+import { getWorkspaceId } from "@/lib/workspace";
 
 type InviteBody = {
   email: string;
@@ -9,12 +10,13 @@ type InviteBody = {
 
 export async function POST(request: Request) {
   try {
-    await requireRole(["admin"]);
+    const { supabase: ctx, user } = await requireRole(["admin"]);
+    const wsId = await getWorkspaceId(ctx, user.id);
     const body = await parseJson<InviteBody>(request);
     const supabase = createServiceRoleClient();
 
     const { error } = await supabase.auth.admin.inviteUserByEmail(body.email, {
-      data: { role: body.role, name: body.name },
+      data: { role: body.role, name: body.name, workspace_id: wsId },
       redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/accept-invite`,
     });
 
