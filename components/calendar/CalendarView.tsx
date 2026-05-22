@@ -12,7 +12,7 @@ export function CalendarView({ events }: { events: EventSummary[] }) {
   const router = useRouter();
 
   return (
-    <div className="overflow-hidden rounded-lg border border-white/10 bg-white p-3 text-zinc-950">
+    <div className="fc-dark overflow-hidden rounded-lg border border-white/10 bg-[#101114] p-3">
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
         initialView="dayGridMonth"

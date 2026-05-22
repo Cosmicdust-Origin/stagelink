@@ -35,6 +35,81 @@ button:active:not(:disabled) {
   opacity: 0.75;
 }
 
+/* FullCalendar dark theme */
+.fc-dark {
+  --fc-page-bg-color: #101114;
+  --fc-neutral-bg-color: rgba(255, 255, 255, 0.04);
+  --fc-neutral-text-color: #71717a;
+  --fc-border-color: rgba(255, 255, 255, 0.1);
+  --fc-button-text-color: #f4f4f5;
+  --fc-button-bg-color: #18191e;
+  --fc-button-border-color: rgba(255, 255, 255, 0.12);
+  --fc-button-hover-bg-color: #24252b;
+  --fc-button-hover-border-color: rgba(255, 255, 255, 0.2);
+  --fc-button-active-bg-color: #e8457a;
+  --fc-button-active-border-color: #e8457a;
+  --fc-today-bg-color: rgba(232, 69, 122, 0.08);
+  --fc-non-business-color: rgba(255, 255, 255, 0.02);
+  --fc-highlight-color: rgba(232, 69, 122, 0.15);
+  --fc-list-event-hover-bg-color: rgba(255, 255, 255, 0.05);
+  --fc-more-link-bg-color: rgba(255, 255, 255, 0.08);
+  --fc-more-link-text-color: #a1a1aa;
+  --fc-now-indicator-color: #e8457a;
+  color: #e4e4e7;
+}
+
+/* day/week headers */
+.fc-dark .fc-col-header-cell-cushion,
+.fc-dark .fc-daygrid-day-number,
+.fc-dark .fc-timegrid-axis-cushion,
+.fc-dark .fc-timegrid-slot-label-cushion,
+.fc-dark .fc-list-day-text,
+.fc-dark .fc-list-day-side-text {
+  color: #a1a1aa;
+  text-decoration: none;
+}
+
+.fc-dark .fc-daygrid-day-number:hover,
+.fc-dark .fc-col-header-cell-cushion:hover {
+  color: #f4f4f5;
+}
+
+/* scrollgrid cells */
+.fc-dark .fc-scrollgrid,
+.fc-dark .fc-scrollgrid td,
+.fc-dark .fc-scrollgrid th {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* list view */
+.fc-dark .fc-list-day-cushion {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+.fc-dark .fc-list-event-title a {
+  color: #e4e4e7;
+  text-decoration: none;
+}
+
+.fc-dark .fc-list-empty {
+  background: var(--fc-page-bg-color);
+  color: #71717a;
+}
+
+/* toolbar title */
+.fc-dark .fc-toolbar-title {
+  color: #f4f4f5;
+}
+
+/* button group dividers */
+.fc-dark .fc-button-group .fc-button {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.fc-dark .fc-button:focus {
+  box-shadow: 0 0 0 2px rgba(232, 69, 122, 0.4);
+}
+
 .event-type-live {
   background: #e8457a !important;
   border-color: #e8457a !important;
