@@ -4,9 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  CalendarDays, ChartColumnStacked, CircleDollarSign,
-  ClipboardList, LayoutDashboard, Megaphone, Menu,
-  Settings, UsersRound, X,
+  CalendarDays,
+  ChartColumnStacked,
+  CircleDollarSign,
+  ClipboardList,
+  LayoutDashboard,
+  Megaphone,
+  Menu,
+  Settings,
+  UsersRound,
+  X,
 } from "lucide-react";
 import { navItems } from "@/lib/constants";
 import type { UserRole } from "@/lib/types";
@@ -22,14 +29,9 @@ const icons: Record<string, React.ElementType> = {
   "/settings": Settings,
 };
 
-const shortLabels: Record<string, string> = {
-  "/dashboard": "홈",
-  "/calendar": "일정",
-  "/tasks": "업무",
-  "/notice": "공지",
-};
-
 const bottomTabs = ["/dashboard", "/calendar", "/tasks", "/notice"];
+
+const getNavLabel = (href: string) => navItems.find((item) => item.href === href)?.label ?? href;
 
 export function MobileNav({ role }: { role?: UserRole }) {
   const pathname = usePathname();
@@ -43,6 +45,7 @@ export function MobileNav({ role }: { role?: UserRole }) {
         {bottomTabs.map((href) => {
           const Icon = icons[href];
           const active = pathname === href || pathname.startsWith(href + "/");
+
           return (
             <Link
               key={href}
@@ -50,7 +53,7 @@ export function MobileNav({ role }: { role?: UserRole }) {
               className={`flex h-16 flex-col items-center justify-center gap-1 text-xs transition-colors ${active ? "text-[#E8457A]" : "text-zinc-400"}`}
             >
               <Icon className="h-5 w-5" />
-              {shortLabels[href]}
+              {getNavLabel(href)}
             </Link>
           );
         })}
@@ -60,31 +63,20 @@ export function MobileNav({ role }: { role?: UserRole }) {
           className="flex h-16 flex-col items-center justify-center gap-1 text-xs text-zinc-400"
         >
           <Menu className="h-5 w-5" />
-          더보기
+          더 보기
         </button>
       </nav>
 
-      {/* Backdrop */}
-      {open && (
-        <div
-          className="fixed inset-0 z-30 bg-black/60 md:hidden"
-          onClick={() => setOpen(false)}
-        />
-      )}
+      {open && <div className="fixed inset-0 z-30 bg-black/60 md:hidden" onClick={() => setOpen(false)} />}
 
-      {/* Slide-up drawer */}
       <div
         className={`fixed inset-x-0 bottom-0 z-40 rounded-t-2xl bg-[#14151a] transition-transform duration-300 ease-out md:hidden ${
           open ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
           <p className="font-semibold text-white">전체 메뉴</p>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="rounded-md p-1 text-zinc-400 hover:text-white"
-          >
+          <button type="button" onClick={() => setOpen(false)} className="rounded-md p-1 text-zinc-400 hover:text-white">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -93,15 +85,14 @@ export function MobileNav({ role }: { role?: UserRole }) {
           {visibleItems.map((item) => {
             const Icon = icons[item.href];
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
+
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className={`flex flex-col items-center gap-2 rounded-xl py-5 text-xs font-medium transition-colors ${
-                  active
-                    ? "bg-[#E8457A]/15 text-[#E8457A]"
-                    : "bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
+                  active ? "bg-[#E8457A]/15 text-[#E8457A]" : "bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
                 }`}
               >
                 <Icon className="h-5 w-5" />
