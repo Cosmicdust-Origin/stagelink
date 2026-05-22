@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root {
+  --background: #101114;
+  --foreground: #f4f4f5;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  outline-color: #e8457a;
+}
+
+.event-type-live {
+  background: #e8457a !important;
+  border-color: #e8457a !important;
+}
+
+.event-type-rehearsal {
+  background: #4a9fe8 !important;
+  border-color: #4a9fe8 !important;
+}
+
+.event-type-filming {
+  background: #9b59b6 !important;
+  border-color: #9b59b6 !important;
+}
+
+.event-type-meeting {
+  background: #27ae60 !important;
+  border-color: #27ae60 !important;
+}
+
+.event-type-other {
+  background: #95a5a6 !important;
+  border-color: #95a5a6 !important;
+}
