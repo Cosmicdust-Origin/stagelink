@@ -24,11 +24,44 @@ type GroupMember = {
 
 function daysUntilRenewal(startDate: string | null, months: number | null): number | null {
   if (!startDate || !months) return null;
-  const renewal = new Date(startDate);
+  const [year, month, day] = startDate.split("-").map(Number);
+  if (!year || !month || !day) return null;
+
+  const renewal = new Date(year, month - 1, day);
   renewal.setMonth(renewal.getMonth() + months);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return Math.ceil((renewal.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function renewalStatus(startDate: string | null, months: number | null) {
+  const days = daysUntilRenewal(startDate, months);
+
+  if (days === null) {
+    return {
+      className: "text-zinc-500",
+      message: "계약 만료/갱신일 미설정",
+    };
+  }
+
+  if (days < 0) {
+    return {
+      className: "text-red-400",
+      message: `계약 만료/갱신일 ${Math.abs(days)}일 경과`,
+    };
+  }
+
+  if (days === 0) {
+    return {
+      className: "text-amber-300",
+      message: "계약 만료/갱신일 오늘",
+    };
+  }
+
+  return {
+    className: days <= 30 ? "text-amber-400" : "text-zinc-300",
+    message: `계약 만료/갱신까지 ${days}일`,
+  };
 }
 
 export function MemberManager({
@@ -126,11 +159,7 @@ export function MemberManager({
       ) : null}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {members.map((member) => {
-          const days = daysUntilRenewal(member.contract_start_date, member.contract_duration_months);
-          const renewalColor = days === null ? "" : days < 0 ? "text-red-400" : days <= 30 ? "text-amber-400" : "text-zinc-500";
-          const renewalMessage = days === null ? null : days < 0
-            ? `계약 갱신일이 ${-days}일 지났습니다`
-            : `계약 갱신일까지 ${days}일 남았습니다`;
+          const contractStatus = renewalStatus(member.contract_start_date, member.contract_duration_months);
 
           return (
             <article key={member.id} className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
@@ -178,9 +207,7 @@ export function MemberManager({
                   </button>
                 ) : null}
               </div>
-              {renewalMessage ? (
-                <p className={`mt-3 border-t border-white/5 pt-3 text-xs ${renewalColor}`}>{renewalMessage}</p>
-              ) : null}
+              <p className={`mt-3 border-t border-white/5 pt-3 text-xs font-medium ${contractStatus.className}`}>{contractStatus.message}</p>
             </article>
           );
         })}
