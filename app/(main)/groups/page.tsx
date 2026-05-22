@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GroupCreateForm } from "@/components/groups/GroupCreateForm";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -20,7 +21,7 @@ export default async function GroupsPage() {
         <h1 className="text-2xl font-semibold text-white">그룹 관리</h1>
         <p className="mt-1 text-sm text-zinc-400">그룹을 만들고 멤버를 배정합니다.</p>
       </div>
-      {canEdit ? <GroupCreateForm /> : null}
+      {canEdit ? <CollapsibleSection label="그룹 추가"><GroupCreateForm /></CollapsibleSection> : null}
       {groups?.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {groups.map((group) => (

@@ -1,5 +1,6 @@
 import { TaskBoard } from "@/components/tasks/TaskBoard";
 import { TaskCreateForm } from "@/components/tasks/TaskCreateForm";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function TasksPage() {
@@ -20,7 +21,9 @@ export default async function TasksPage() {
         <h1 className="text-2xl font-semibold text-white">업무 보드</h1>
         <p className="mt-1 text-sm text-zinc-400">업무를 등록하고 상태를 수정합니다.</p>
       </div>
-      <TaskCreateForm groups={groups ?? []} assignees={profiles ?? []} />
+      <CollapsibleSection label="업무 등록">
+        <TaskCreateForm groups={groups ?? []} assignees={profiles ?? []} />
+      </CollapsibleSection>
       <TaskBoard initialTasks={tasks ?? []} />
     </div>
   );

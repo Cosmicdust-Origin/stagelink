@@ -1,5 +1,6 @@
 import { RateCreateForm } from "@/components/settlement/RateCreateForm";
 import { SettlementTable } from "@/components/settlement/SettlementTable";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getSettlementSummary } from "@/lib/api/settlement";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -29,7 +30,9 @@ export default async function SettlementPage({
           PDF 내보내기
         </a>
       </div>
-      <RateCreateForm members={profiles ?? []} types={types ?? []} />
+      <CollapsibleSection label="정산 비율 등록">
+        <RateCreateForm members={profiles ?? []} types={types ?? []} />
+      </CollapsibleSection>
       <section className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
         <h2 className="font-semibold text-white">등록된 정산 비율</h2>
         <div className="mt-3 divide-y divide-white/10">

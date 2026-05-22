@@ -1,5 +1,6 @@
 import { MonthFilter } from "@/components/privileges/MonthFilter";
 import { PrivilegeRecordCreateForm, PrivilegeTypeCreateForm } from "@/components/privileges/PrivilegeForms";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { MonthlyBarChart } from "@/components/privileges/MonthlyBarChart";
 import { TrendLineChart } from "@/components/privileges/TrendLineChart";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -79,12 +80,16 @@ export default async function PrivilegesPage({ searchParams }: Props) {
         </div>
         <MonthFilter value={selectedMonth} />
       </div>
-      <PrivilegeTypeCreateForm />
-      <PrivilegeRecordCreateForm
-        events={(events ?? []).map((e) => ({ id: e.id, name: e.title }))}
-        members={members ?? []}
-        types={types ?? []}
-      />
+      <CollapsibleSection label="특전 등록">
+        <PrivilegeTypeCreateForm />
+      </CollapsibleSection>
+      <CollapsibleSection label="수량 등록">
+        <PrivilegeRecordCreateForm
+          events={(events ?? []).map((e) => ({ id: e.id, name: e.title }))}
+          members={members ?? []}
+          types={types ?? []}
+        />
+      </CollapsibleSection>
       {hasData ? (
         <div className="grid gap-4 xl:grid-cols-2">
           <MonthlyBarChart
