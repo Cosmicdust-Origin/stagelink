@@ -1,14 +1,26 @@
 import Link from "next/link";
+import { GroupCreateForm } from "@/components/groups/GroupCreateForm";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function GroupsPage() {
   const supabase = await createServerSupabaseClient();
-  const { data: groups } = await supabase.from("groups").select("*, group_members(count)").order("created_at", { ascending: false });
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const [{ data: groups }, { data: profile }] = await Promise.all([
+    supabase.from("groups").select("*, group_members(count)").order("created_at", { ascending: false }),
+    user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
+  ]);
+  const canEdit = profile?.role === "admin";
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-white">그룹 관리</h1>
+      <div>
+        <h1 className="text-2xl font-semibold text-white">그룹 관리</h1>
+        <p className="mt-1 text-sm text-zinc-400">그룹을 만들고 멤버를 배정합니다.</p>
+      </div>
+      {canEdit ? <GroupCreateForm /> : null}
       {groups?.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {groups.map((group) => (
@@ -20,7 +32,7 @@ export default async function GroupsPage() {
           ))}
         </div>
       ) : (
-        <EmptyState title="등록된 그룹이 없습니다" description="관리자 계정으로 그룹을 추가할 수 있습니다." />
+        <EmptyState title="등록된 그룹이 없습니다" description={canEdit ? "위 입력 영역에서 첫 그룹을 추가하세요." : "관리자 계정으로 그룹을 추가할 수 있습니다."} />
       )}
     </div>
   );

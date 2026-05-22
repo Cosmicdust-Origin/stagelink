@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MemberManager } from "@/components/groups/MemberManager";
 import { MonthlyBarChart } from "@/components/privileges/MonthlyBarChart";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -7,12 +8,17 @@ type Params = { params: Promise<{ groupId: string }> };
 export default async function GroupDetailPage({ params }: Params) {
   const { groupId } = await params;
   const supabase = await createServerSupabaseClient();
-  const [{ data: group }, { data: members }, { data: events }] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const [{ data: group }, { data: members }, { data: events }, { data: profiles }, { data: profile }] = await Promise.all([
     supabase.from("groups").select("*").eq("id", groupId).single(),
     supabase.from("group_members").select("*, profiles(*)").eq("group_id", groupId),
     supabase.from("events").select("*").eq("group_id", groupId).order("start_at", { ascending: false }).limit(5),
+    supabase.from("profiles").select("id,name,role").order("name"),
+    user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
   ]);
-
+  const canEdit = profile?.role === "admin";
   const chartData = (members ?? []).map((member) => ({ name: member.profiles?.name ?? "멤버", check: 0, goods: 0 }));
 
   return (
@@ -21,14 +27,7 @@ export default async function GroupDetailPage({ params }: Params) {
         <h1 className="text-2xl font-semibold text-white">{group?.name}</h1>
         <p className="mt-2 text-sm text-zinc-400">{group?.description ?? "그룹 기본 정보를 관리합니다."}</p>
       </section>
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {members?.map((member) => (
-          <Link key={member.id} href={`/groups/${groupId}/${member.user_id}`} className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-            <p className="font-semibold text-white">{member.profiles?.name}</p>
-            <p className="mt-1 text-sm text-zinc-400">{member.position ?? "포지션 미정"}</p>
-          </Link>
-        ))}
-      </section>
+      <MemberManager groupId={groupId} members={members ?? []} profiles={profiles ?? []} canEdit={canEdit} />
       <section className="grid gap-4 lg:grid-cols-2">
         <div>
           <h2 className="mb-3 font-semibold text-white">최근 일정</h2>
