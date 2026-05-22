@@ -49,6 +49,8 @@ export type PrivilegeRecord = {
 
 export type SettlementLine = {
   privilege_type: string;
+  event_name: string;
+  event_date: string;
   quantity: number;
   unit_price: number;
   rate: number;
