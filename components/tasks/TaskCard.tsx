@@ -1,7 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Save, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useToastStore } from "@/lib/toast";
 import type { TaskStatus } from "@/lib/types";
@@ -14,24 +13,30 @@ type Props = {
   assigneeName: string | null;
   dueDate: string | null;
   currentStatus: TaskStatus;
+  onStatusChange: (status: TaskStatus) => void;
+  onArchive: () => void;
 };
 
-export function TaskCard({ taskId, title, description, groupName, assigneeName, dueDate, currentStatus }: Props) {
-  const router = useRouter();
+const statusLabels: Record<TaskStatus, string> = {
+  todo: "대기",
+  in_progress: "진행 중",
+  done: "완료",
+};
+
+export function TaskCard({
+  taskId,
+  title,
+  description,
+  groupName,
+  assigneeName,
+  dueDate,
+  currentStatus,
+  onStatusChange,
+  onArchive,
+}: Props) {
   const toast = useToastStore((s) => s.show);
-  const [status, setStatus] = useState<TaskStatus>(currentStatus);
   const [expanded, setExpanded] = useState(!!description);
   const [desc, setDesc] = useState(description ?? "");
-
-  async function saveStatus() {
-    await fetch(`/api/tasks/${taskId}/status`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    toast("상태 저장됨");
-    router.refresh();
-  }
 
   async function saveDescription() {
     await fetch(`/api/tasks/${taskId}`, {
@@ -40,12 +45,6 @@ export function TaskCard({ taskId, title, description, groupName, assigneeName, 
       body: JSON.stringify({ description: desc || null }),
     });
     toast("설명 저장됨");
-  }
-
-  async function archiveTask() {
-    await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
-    toast("업무 보관됨");
-    router.refresh();
   }
 
   return (
@@ -79,26 +78,18 @@ export function TaskCard({ taskId, title, description, groupName, assigneeName, 
       <div className="mt-3 flex gap-2">
         <select
           className="h-9 flex-1 rounded-md border border-white/10 bg-[#101114] px-2 text-xs text-white"
-          value={status}
-          onChange={(e) => setStatus(e.target.value as TaskStatus)}
+          value={currentStatus}
+          onChange={(e) => onStatusChange(e.target.value as TaskStatus)}
         >
-          <option value="todo">대기</option>
-          <option value="in_progress">진행 중</option>
-          <option value="done">완료</option>
+          {(Object.entries(statusLabels) as [TaskStatus, string][]).map(([val, label]) => (
+            <option key={val} value={val}>{label}</option>
+          ))}
         </select>
-        <button
-          className="rounded-md border border-white/10 p-2 text-zinc-300"
-          type="button"
-          aria-label="상태 저장"
-          onClick={saveStatus}
-        >
-          <Save className="h-4 w-4" />
-        </button>
         <button
           className="rounded-md border border-red-500/40 p-2 text-red-300"
           type="button"
           aria-label="업무 보관"
-          onClick={archiveTask}
+          onClick={onArchive}
         >
           <Trash2 className="h-4 w-4" />
         </button>
