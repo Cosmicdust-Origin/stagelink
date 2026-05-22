@@ -1,6 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { Toaster } from "@/components/ui/Toaster";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +21,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
         <main className="mx-auto w-full max-w-7xl px-4 py-6 md:px-6">{children}</main>
       </div>
       <MobileNav />
+      <Toaster />
     </div>
   );
 }

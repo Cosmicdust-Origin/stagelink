@@ -3,6 +3,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToastStore } from "@/lib/toast";
 
 type Entry = {
   id: string;
@@ -30,6 +31,7 @@ export function TimetablePanel({
   canEdit: boolean;
 }) {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [time, setTime] = useState("18:00");
   const [groupId, setGroupId] = useState("");
   const [sets, setSets] = useState("");
@@ -50,6 +52,7 @@ export function TimetablePanel({
       }),
     });
     setNote("");
+    toast("타임테이블 추가됨");
     router.refresh();
   }
 
@@ -58,6 +61,7 @@ export function TimetablePanel({
     setBusy(entryId);
     await fetch(`/api/events/${eventId}/timetable/${entryId}`, { method: "DELETE" });
     setBusy(null);
+    toast("항목 삭제됨");
     router.refresh();
   }
 
@@ -67,6 +71,7 @@ export function TimetablePanel({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ [field]: value }),
     });
+    toast("저장됨");
     router.refresh();
   }
 

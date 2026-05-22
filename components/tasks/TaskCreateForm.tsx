@@ -3,13 +3,16 @@
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToastStore } from "@/lib/toast";
 import type { TaskStatus } from "@/lib/types";
 
 type Option = { id: string; name: string };
 
 export function TaskCreateForm({ groups, assignees }: { groups: Option[]; assignees: Option[] }) {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [groupId, setGroupId] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -19,10 +22,18 @@ export function TaskCreateForm({ groups, assignees }: { groups: Option[]; assign
     const response = await fetch("/api/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, group_id: groupId || null, assignee_id: assigneeId || null, due_date: dueDate || null }),
+      body: JSON.stringify({
+        title,
+        description: description || null,
+        group_id: groupId || null,
+        assignee_id: assigneeId || null,
+        due_date: dueDate || null,
+      }),
     });
     if (response.ok) {
       setTitle("");
+      setDescription("");
+      toast("업무 등록됨");
       router.refresh();
     }
   }
@@ -45,6 +56,13 @@ export function TaskCreateForm({ groups, assignees }: { groups: Option[]; assign
           업무 등록
         </button>
       </div>
+      <textarea
+        className="mt-3 w-full resize-none rounded-md border border-white/10 bg-[#101114] px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-white/30 focus:outline-none"
+        rows={2}
+        placeholder="상세 내용 (선택)"
+        value={description}
+        onChange={(event) => setDescription(event.target.value)}
+      />
     </form>
   );
 }

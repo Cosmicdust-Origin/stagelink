@@ -3,6 +3,7 @@
 import { Check, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToastStore } from "@/lib/toast";
 
 type Item = {
   id: string;
@@ -21,6 +22,7 @@ export function ChecklistPanel({
   canEdit: boolean;
 }) {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -32,6 +34,7 @@ export function ChecklistPanel({
       body: JSON.stringify({ label, sort_order: items.length }),
     });
     setLabel("");
+    toast("항목 추가됨");
     router.refresh();
   }
 
@@ -44,6 +47,7 @@ export function ChecklistPanel({
       body: JSON.stringify({ is_checked: !item.is_checked }),
     });
     setBusy(null);
+    toast(item.is_checked ? "완료 취소됨" : "완료 표시됨");
     router.refresh();
   }
 
@@ -52,6 +56,7 @@ export function ChecklistPanel({
     setBusy(itemId);
     await fetch(`/api/events/${eventId}/checklist/${itemId}`, { method: "DELETE" });
     setBusy(null);
+    toast("항목 삭제됨");
     router.refresh();
   }
 

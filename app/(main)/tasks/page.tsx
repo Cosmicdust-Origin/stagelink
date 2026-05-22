@@ -1,4 +1,5 @@
-import { TaskActions, TaskCreateForm } from "@/components/tasks/TaskCreateForm";
+import { TaskCard } from "@/components/tasks/TaskCard";
+import { TaskCreateForm } from "@/components/tasks/TaskCreateForm";
 import { taskStatusLabels } from "@/lib/constants";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { TaskStatus } from "@/lib/types";
@@ -30,12 +31,16 @@ export default async function TasksPage() {
             <h2 className="font-semibold text-white">{taskStatusLabels[status]}</h2>
             <div className="mt-4 space-y-3">
               {(tasks ?? []).filter((task) => task.status === status).map((task) => (
-                <article key={task.id} className="rounded-md border border-white/10 bg-[#101114] p-3">
-                  <p className="font-medium text-white">{task.title}</p>
-                  <p className="mt-2 text-xs text-zinc-400">{task.groups?.name ?? "전체"} · {task.profiles?.name ?? "미배정"}</p>
-                  {task.due_date ? <p className="mt-2 text-xs text-[#E8457A]">마감 {task.due_date}</p> : null}
-                  <TaskActions taskId={task.id} currentStatus={task.status} />
-                </article>
+                <TaskCard
+                  key={task.id}
+                  taskId={task.id}
+                  title={task.title}
+                  description={task.description ?? null}
+                  groupName={task.groups?.name ?? null}
+                  assigneeName={task.profiles?.name ?? null}
+                  dueDate={task.due_date ?? null}
+                  currentStatus={task.status}
+                />
               ))}
             </div>
           </section>
