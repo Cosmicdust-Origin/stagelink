@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   CalendarDays,
@@ -9,13 +9,16 @@ import {
   CircleDollarSign,
   ClipboardList,
   LayoutDashboard,
+  LogOut,
   Megaphone,
   Menu,
   Settings,
+  UserCircle,
   UsersRound,
   X,
 } from "lucide-react";
 import { navItems } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/client";
 import type { UserRole } from "@/lib/types";
 
 const icons: Record<string, React.ElementType> = {
@@ -27,6 +30,7 @@ const icons: Record<string, React.ElementType> = {
   "/tasks": ClipboardList,
   "/notice": Megaphone,
   "/settings": Settings,
+  "/account": UserCircle,
 };
 
 const bottomTabs = ["/dashboard", "/calendar", "/tasks", "/notice"];
@@ -35,9 +39,17 @@ const getNavLabel = (href: string) => navItems.find((item) => item.href === href
 
 export function MobileNav({ role }: { role?: UserRole }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   const visibleItems = navItems.filter((item) => !item.adminOnly || role === "admin");
+
+  async function logout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <>
@@ -67,7 +79,9 @@ export function MobileNav({ role }: { role?: UserRole }) {
         </button>
       </nav>
 
-      {open && <div className="fixed inset-0 z-30 bg-black/60 md:hidden" onClick={() => setOpen(false)} />}
+      {open && (
+        <div className="fixed inset-0 z-30 bg-black/60 md:hidden" onClick={() => setOpen(false)} />
+      )}
 
       <div
         className={`fixed inset-x-0 bottom-0 z-40 rounded-t-2xl bg-[#14151a] transition-transform duration-300 ease-out md:hidden ${
@@ -76,12 +90,16 @@ export function MobileNav({ role }: { role?: UserRole }) {
       >
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
           <p className="font-semibold text-white">전체 메뉴</p>
-          <button type="button" onClick={() => setOpen(false)} className="rounded-md p-1 text-zinc-400 hover:text-white">
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="rounded-md p-1 text-zinc-400 hover:text-white"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <nav className="grid grid-cols-3 gap-3 p-4 pb-10">
+        <nav className="grid grid-cols-3 gap-3 p-4">
           {visibleItems.map((item) => {
             const Icon = icons[item.href];
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -92,7 +110,9 @@ export function MobileNav({ role }: { role?: UserRole }) {
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className={`flex flex-col items-center gap-2 rounded-xl py-5 text-xs font-medium transition-colors ${
-                  active ? "bg-[#E8457A]/15 text-[#E8457A]" : "bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
+                  active
+                    ? "bg-[#E8457A]/15 text-[#E8457A]"
+                    : "bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -101,6 +121,18 @@ export function MobileNav({ role }: { role?: UserRole }) {
             );
           })}
         </nav>
+
+        {/* Logout inside the drawer */}
+        <div className="border-t border-white/10 px-4 pb-10 pt-3">
+          <button
+            type="button"
+            onClick={logout}
+            className="flex w-full items-center gap-3 rounded-xl bg-white/[0.04] px-4 py-3 text-sm font-medium text-red-300"
+          >
+            <LogOut className="h-5 w-5" />
+            로그아웃
+          </button>
+        </div>
       </div>
     </>
   );

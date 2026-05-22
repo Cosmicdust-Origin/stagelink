@@ -31,4 +31,5 @@ export const navItems = [
   { href: "/tasks", label: "업무 보드", adminOnly: false },
   { href: "/notice", label: "공지 게시판", adminOnly: false },
   { href: "/settings", label: "설정", adminOnly: false },
+  { href: "/account", label: "마이페이지", adminOnly: false },
 ] as const;
