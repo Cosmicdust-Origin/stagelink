@@ -45,7 +45,7 @@ export default async function GroupDetailPage({ params }: Params) {
         </div>
         <div>
           <h2 className="mb-3 font-semibold text-white">월간 특전 요약</h2>
-          <MonthlyBarChart data={chartData} keys={["check", "goods"]} />
+          <MonthlyBarChart title="월간 특전 요약" data={chartData} keys={["check", "goods"]} />
         </div>
       </section>
     </div>
