@@ -53,7 +53,7 @@ export function EventCreateForm({ groups, managers }: { groups: Option[]; manage
 
   return (
     <form className="rounded-lg border border-white/10 bg-white/[0.04] p-4" onSubmit={createEvent}>
-      <div className="grid gap-3 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <label className="text-sm text-zinc-300">
           제목
           <input className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={title} onChange={(event) => setTitle(event.target.value)} required />

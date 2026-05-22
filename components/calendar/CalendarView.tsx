@@ -5,6 +5,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import timeGridPlugin from "@fullcalendar/timegrid";
+import koLocale from "@fullcalendar/core/locales/ko";
 import { useRouter } from "next/navigation";
 import type { EventSummary } from "@/lib/types";
 
@@ -16,6 +17,7 @@ export function CalendarView({ events }: { events: EventSummary[] }) {
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
         initialView="dayGridMonth"
+        locale={koLocale}
         headerToolbar={{
           left: "prev,next today",
           center: "title",

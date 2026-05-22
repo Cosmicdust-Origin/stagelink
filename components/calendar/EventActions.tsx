@@ -63,12 +63,13 @@ export function EventActions({
 
   return (
     <form className="mt-4 rounded-lg border border-white/10 bg-[#101114] p-4" onSubmit={save}>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1.4fr_1.2fr_auto_auto]">
+      <div className="grid gap-3 grid-cols-2 xl:grid-cols-4">
         <input
           className="h-10 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           aria-label="일정명"
+          placeholder="일정명"
         />
         <input
           className="h-10 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white"
@@ -97,13 +98,14 @@ export function EventActions({
             </option>
           ))}
         </select>
-        <button className="flex h-10 items-center justify-center gap-2 rounded-md bg-[#E8457A] px-4 text-sm font-semibold text-white" type="submit">
+      </div>
+      <div className="mt-3 flex gap-2">
+        <button className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-[#E8457A] text-sm font-semibold text-white" type="submit">
           <Save className="h-4 w-4" />
           저장
         </button>
-        <button className="flex h-10 items-center justify-center gap-2 rounded-md border border-red-500/40 px-4 text-sm font-semibold text-red-300" type="button" onClick={remove}>
+        <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-red-500/40 text-red-300" type="button" onClick={remove} title="삭제">
           <Trash2 className="h-4 w-4" />
-          삭제
         </button>
       </div>
     </form>
