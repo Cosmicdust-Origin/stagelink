@@ -1,11 +1,12 @@
 import { ChecklistTemplateForm, InviteUserForm } from "@/components/settings/SettingsForms";
+import { PrivilegeTypeManager } from "@/components/settings/PrivilegeTypeManager";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function SettingsPage() {
   const supabase = await createServerSupabaseClient();
   const [{ data: profiles }, { data: privilegeTypes }, { data: templates }, { data: groups }] = await Promise.all([
     supabase.from("profiles").select("id,name,role").order("name"),
-    supabase.from("privilege_types").select("*").order("created_at"),
+    supabase.from("privilege_types").select("id,name,category,unit_price,is_active").order("created_at"),
     supabase.from("checklist_templates").select("*").order("created_at"),
     supabase.from("groups").select("*").order("name"),
   ]);
@@ -18,8 +19,8 @@ export default async function SettingsPage() {
           <InviteUserForm />
           {profiles?.map((profile) => <Row key={profile.id} label={profile.name} value={profile.role} />)}
         </Panel>
-        <Panel title="특전 항목">
-          {privilegeTypes?.map((type) => <Row key={type.id} label={type.name} value={type.unit_price ? `${Number(type.unit_price).toLocaleString("ko-KR")}원` : "단가 없음"} />)}
+        <Panel title="특전 항목 관리">
+          <PrivilegeTypeManager types={privilegeTypes ?? []} />
         </Panel>
         <Panel title="체크리스트 템플릿">
           <ChecklistTemplateForm />

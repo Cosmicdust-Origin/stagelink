@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useOptimistic, useTransition } from "react";
 import { taskStatusLabels } from "@/lib/constants";
 import { useToastStore } from "@/lib/toast";
 import { TaskCard } from "./TaskCard";
@@ -16,37 +16,34 @@ type Task = {
   profiles: { name: string } | null;
 };
 
+type OptimisticAction =
+  | { type: "status"; taskId: string; status: TaskStatus }
+  | { type: "archive"; taskId: string };
+
 const statuses: TaskStatus[] = ["todo", "in_progress", "done"];
 
 export function TaskBoard({ initialTasks }: { initialTasks: Task[] }) {
-  const [tasks, setTasks] = useState(initialTasks);
   const toast = useToastStore((s) => s.show);
-
-  // Sync when server re-renders (e.g. after task creation)
-  useEffect(() => {
-    setTasks(initialTasks);
-  }, [initialTasks]);
+  const [, startTransition] = useTransition();
+  const [tasks, applyOptimistic] = useOptimistic(initialTasks, (currentTasks, action: OptimisticAction) => {
+    if (action.type === "archive") return currentTasks.filter((task) => task.id !== action.taskId);
+    return currentTasks.map((task) => (task.id === action.taskId ? { ...task, status: action.status } : task));
+  });
 
   async function updateStatus(taskId: string, newStatus: TaskStatus) {
-    // Optimistic move
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)));
+    startTransition(() => applyOptimistic({ type: "status", taskId, status: newStatus }));
     const res = await fetch(`/api/tasks/${taskId}/status`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
     });
-    if (!res.ok) {
-      setTasks(initialTasks);
-      toast("저장 실패", "error");
-    } else {
-      toast("상태 변경됨");
-    }
+    toast(res.ok ? "상태를 변경했습니다." : "상태 변경에 실패했습니다.", res.ok ? "success" : "error");
   }
 
   async function archiveTask(taskId: string) {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    toast("업무 보관됨");
-    await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
+    startTransition(() => applyOptimistic({ type: "archive", taskId }));
+    const res = await fetch(`/api/tasks/${taskId}`, { method: "DELETE" });
+    toast(res.ok ? "업무를 보관했습니다." : "업무 보관에 실패했습니다.", res.ok ? "success" : "error");
   }
 
   return (
@@ -56,7 +53,7 @@ export function TaskBoard({ initialTasks }: { initialTasks: Task[] }) {
           <h2 className="font-semibold text-white">{taskStatusLabels[status]}</h2>
           <div className="mt-4 space-y-3">
             {tasks
-              .filter((t) => t.status === status)
+              .filter((task) => task.status === status)
               .map((task) => (
                 <TaskCard
                   key={task.id}
@@ -67,7 +64,7 @@ export function TaskBoard({ initialTasks }: { initialTasks: Task[] }) {
                   assigneeName={task.profiles?.name ?? null}
                   dueDate={task.due_date}
                   currentStatus={task.status}
-                  onStatusChange={(s) => updateStatus(task.id, s)}
+                  onStatusChange={(nextStatus) => updateStatus(task.id, nextStatus)}
                   onArchive={() => archiveTask(task.id)}
                 />
               ))}

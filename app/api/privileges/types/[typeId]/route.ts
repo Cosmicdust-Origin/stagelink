@@ -20,3 +20,21 @@ export async function PUT(request: Request, { params }: Params) {
     return handleApiError(error);
   }
 }
+
+export async function DELETE(_: Request, { params }: Params) {
+  try {
+    const { typeId } = await params;
+    const { supabase } = await requireRole(["admin"]);
+    const { data, error } = await supabase
+      .from("privilege_types")
+      .update({ is_active: false })
+      .eq("id", typeId)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return json({ type: data });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
