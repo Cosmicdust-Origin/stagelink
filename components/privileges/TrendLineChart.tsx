@@ -25,7 +25,7 @@ export function TrendLineChart({ title, description, data }: TrendLineChartProps
             <YAxis stroke="#a1a1aa" tick={{ fontSize: 12 }} unit="장" />
             <Tooltip
               contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", color: "#fff", fontSize: 13 }}
-              formatter={(value: number, name: string) => [`${value}장`, name]}
+              formatter={(value, name) => [`${value}장`, name]}
             />
             <Legend
               wrapperStyle={{ fontSize: 12, color: "#a1a1aa", paddingTop: 8 }}
