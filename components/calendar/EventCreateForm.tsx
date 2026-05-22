@@ -76,9 +76,9 @@ export function EventCreateForm({ groups, managers }: { groups: Option[]; manage
           </select>
         </label>
         <label className="text-sm text-zinc-300">
-          담당자
+          현장 담당자
           <select className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={managerId} onChange={(event) => setManagerId(event.target.value)}>
-            <option value="">미지정</option>
+            <option value="">현장 담당자 미지정</option>
             {managers.map((manager) => <option key={manager.id} value={manager.id}>{manager.name}</option>)}
           </select>
         </label>

@@ -10,7 +10,7 @@ export default async function CalendarPage() {
   const [{ data: events }, { data: groups }, { data: profiles }, { data: profile }] = await Promise.all([
     supabase.from("events").select("id,title,event_type,group_id,venue,start_at,end_at").order("start_at"),
     supabase.from("groups").select("id,name").order("name"),
-    supabase.from("profiles").select("id,name,role").in("role", ["admin", "manager"]).order("name"),
+    supabase.from("profiles").select("id,name,role").order("name"),
     user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
   ]);
   const canEdit = profile?.role === "admin" || profile?.role === "manager";

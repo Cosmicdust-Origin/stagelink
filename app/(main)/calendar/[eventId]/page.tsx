@@ -13,35 +13,74 @@ export default async function EventDetailPage({ params }: Params) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [{ data: event }, { data: checklist }, { data: timetable }, { data: types }, { data: records }, { data: members }, { data: profile }, { data: groups }] =
-    await Promise.all([
-      supabase.from("events").select("*, groups(name), profiles!events_manager_id_fkey(name)").eq("id", eventId).single(),
-      supabase.from("event_checklists").select("*").eq("event_id", eventId).order("sort_order"),
-      supabase.from("timetable_entries").select("*, groups(name)").eq("event_id", eventId).order("sort_order"),
-      supabase.from("privilege_types").select("*").eq("is_active", true).order("created_at"),
-      supabase.from("privilege_records").select("*").eq("event_id", eventId),
-      supabase.from("profiles").select("*").eq("role", "member").order("name"),
-      user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
-      supabase.from("groups").select("id,name").order("name"),
-    ]);
+
+  const [
+    { data: event },
+    { data: checklist },
+    { data: timetable },
+    { data: types },
+    { data: records },
+    { data: members },
+    { data: profile },
+    { data: groups },
+    { data: profiles },
+  ] = await Promise.all([
+    supabase.from("events").select("*, groups(name), profiles!events_manager_id_fkey(name)").eq("id", eventId).single(),
+    supabase.from("event_checklists").select("*").eq("event_id", eventId).order("sort_order"),
+    supabase.from("timetable_entries").select("id,start_time,group_id,note,sort_order,groups(name)").eq("event_id", eventId).order("sort_order"),
+    supabase.from("privilege_types").select("*").eq("is_active", true).order("created_at"),
+    supabase.from("privilege_records").select("*").eq("event_id", eventId),
+    supabase.from("profiles").select("*").eq("role", "member").order("name"),
+    user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
+    supabase.from("groups").select("id,name").order("name"),
+    supabase.from("profiles").select("id,name,role").order("name"),
+  ]);
 
   const canEdit = profile?.role === "admin" || profile?.role === "manager";
+  const managerName = event?.profiles?.name;
 
   return (
     <div className="space-y-5">
       <section className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
-        <p className="text-sm text-zinc-400">{event?.groups?.name ?? "전체"} · {event?.venue ?? "장소 미정"}</p>
-        <h1 className="mt-2 text-2xl font-semibold text-white">{event?.title ?? "이벤트"}</h1>
+        <p className="text-sm text-zinc-400">
+          {event?.groups?.name ?? "전체"} · {event?.venue ?? "장소 미정"}
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold text-white">{event?.title ?? "이벤트"}</h1>
+          {managerName ? (
+            <span className="rounded border border-[#E8457A]/40 bg-[#E8457A]/10 px-2 py-1 text-xs font-medium text-[#ff8eb3]">
+              현장 담당자: {managerName}
+            </span>
+          ) : null}
+        </div>
         {event ? <p className="mt-2 text-sm text-zinc-400">{formatDate(event.start_at)} - {formatDate(event.end_at)}</p> : null}
-        {canEdit && event ? <EventActions eventId={eventId} initialTitle={event.title} initialVenue={event.venue ?? ""} initialMemo={event.memo ?? ""} /> : null}
+        {canEdit && event ? (
+          <EventActions
+            eventId={eventId}
+            initialTitle={event.title}
+            initialVenue={event.venue ?? ""}
+            initialMemo={event.memo ?? ""}
+            initialManagerId={event.manager_id ?? ""}
+            profiles={profiles ?? []}
+          />
+        ) : null}
       </section>
+
       <section className="grid gap-4 lg:grid-cols-2">
         <ChecklistPanel eventId={eventId} items={checklist ?? []} canEdit={canEdit} />
         <TimetablePanel eventId={eventId} entries={timetable ?? []} groups={groups ?? []} canEdit={canEdit} />
       </section>
+
       <section className="space-y-3">
         <h2 className="font-semibold text-white">특전 수량</h2>
-        <PrivilegeInputTable eventId={eventId} members={members ?? []} privilegeTypes={types ?? []} records={records ?? []} canEdit={canEdit} currentUserId={user?.id ?? ""} />
+        <PrivilegeInputTable
+          eventId={eventId}
+          members={members ?? []}
+          privilegeTypes={types ?? []}
+          records={records ?? []}
+          canEdit={canEdit}
+          currentUserId={user?.id ?? ""}
+        />
       </section>
     </div>
   );
