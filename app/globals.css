@@ -31,6 +31,9 @@ input[type="date"],
 input[type="month"],
 input[type="time"] {
   color-scheme: dark;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
 }
 
 select option {
@@ -145,6 +148,32 @@ button:active:not(:disabled) {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 120px;
+}
+
+/* equal-width chunks so title is truly centered */
+.fc-dark .fc-toolbar {
+  display: flex;
+  align-items: center;
+}
+
+.fc-dark .fc-toolbar-chunk {
+  flex: 1;
+  min-width: 0;
+}
+
+.fc-dark .fc-toolbar-chunk:nth-child(2) {
+  display: flex;
+  justify-content: center;
+}
+
+.fc-dark .fc-toolbar-chunk:last-child {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* prevent button labels from wrapping */
+.fc-dark .fc-button {
+  white-space: nowrap !important;
 }
 
 /* button group dividers */
