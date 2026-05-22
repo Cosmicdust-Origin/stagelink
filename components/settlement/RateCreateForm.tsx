@@ -4,12 +4,14 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToastStore } from "@/lib/toast";
+import { useCollapsibleClose } from "@/components/ui/CollapsibleSection";
 
 type Option = { id: string; name: string };
 
 export function RateCreateForm({ members, types }: { members: Option[]; types: Option[] }) {
   const router = useRouter();
   const toast = useToastStore((s) => s.show);
+  const closeSection = useCollapsibleClose();
   const [memberId, setMemberId] = useState("");
   const [typeId, setTypeId] = useState("");
   const [ratePercent, setRatePercent] = useState("70");
@@ -24,6 +26,7 @@ export function RateCreateForm({ members, types }: { members: Option[]; types: O
     });
     if (response.ok) {
       toast("비율 등록 완료!");
+      closeSection();
       router.refresh();
     } else {
       toast("등록 실패", "error");

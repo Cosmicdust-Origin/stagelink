@@ -4,12 +4,14 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToastStore } from "@/lib/toast";
+import { useCollapsibleClose } from "@/components/ui/CollapsibleSection";
 
 type Option = { id: string; name: string };
 
 export function TaskCreateForm({ groups, assignees }: { groups: Option[]; assignees: Option[] }) {
   const router = useRouter();
   const toast = useToastStore((s) => s.show);
+  const closeSection = useCollapsibleClose();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [groupId, setGroupId] = useState("");
@@ -33,6 +35,7 @@ export function TaskCreateForm({ groups, assignees }: { groups: Option[]; assign
       setTitle("");
       setDescription("");
       toast("업무 등록됨");
+      closeSection();
       router.refresh();
     }
   }

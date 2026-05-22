@@ -2,6 +2,18 @@ import { handleApiError, json, parseJson, requireRole } from "@/lib/api/auth";
 
 type Params = { params: Promise<{ rateId: string }> };
 
+export async function DELETE(_: Request, { params }: Params) {
+  try {
+    const { rateId } = await params;
+    const { supabase } = await requireRole(["admin"]);
+    const { error } = await supabase.from("settlement_rates").delete().eq("id", rateId);
+    if (error) throw error;
+    return json({ success: true });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { rateId } = await params;

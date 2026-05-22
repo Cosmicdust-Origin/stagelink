@@ -1,4 +1,5 @@
 import { RateCreateForm } from "@/components/settlement/RateCreateForm";
+import { SettlementRatesList } from "@/components/settlement/SettlementRatesList";
 import { SettlementTable } from "@/components/settlement/SettlementTable";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -35,13 +36,8 @@ export default async function SettlementPage({
       </CollapsibleSection>
       <section className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
         <h2 className="font-semibold text-white">등록된 정산 비율</h2>
-        <div className="mt-3 divide-y divide-white/10">
-          {(rates ?? []).map((rate) => (
-            <div key={rate.id} className="flex items-center justify-between gap-4 py-2 text-sm">
-              <span className="text-zinc-200">{rate.profiles?.name ?? "멤버"} · {rate.privilege_types?.name ?? "특전"}</span>
-              <span className="tabular-nums text-zinc-400">{Number(rate.rate) * 100}%</span>
-            </div>
-          ))}
+        <div className="mt-3">
+          <SettlementRatesList rates={rates ?? []} />
         </div>
       </section>
       {members.length ? <SettlementTable members={members} /> : <EmptyState title="정산 가능한 기록이 없습니다" />}

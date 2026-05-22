@@ -4,10 +4,12 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToastStore } from "@/lib/toast";
+import { useCollapsibleClose } from "@/components/ui/CollapsibleSection";
 
 export function GroupCreateForm() {
   const router = useRouter();
   const toast = useToastStore((s) => s.show);
+  const closeSection = useCollapsibleClose();
   const [name, setName] = useState("");
   const [debutDate, setDebutDate] = useState("");
   const [description, setDescription] = useState("");
@@ -41,6 +43,7 @@ export function GroupCreateForm() {
     setDescription("");
     setPrivilegeUnitPrice("");
     toast("그룹 추가 완료!");
+    closeSection();
     router.refresh();
   }
 
