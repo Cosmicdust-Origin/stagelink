@@ -8,8 +8,8 @@ type Rate = {
   id: string;
   rate: number;
   valid_from: string;
-  profiles: { name: string } | null;
-  privilege_types: { name: string } | null;
+  profiles: { name: string } | { name: string }[] | null;
+  privilege_types: { name: string } | { name: string }[] | null;
 };
 
 export function SettlementRatesList({ rates }: { rates: Rate[] }) {
@@ -32,25 +32,30 @@ export function SettlementRatesList({ rates }: { rates: Rate[] }) {
 
   return (
     <div className="divide-y divide-white/10">
-      {rates.map((rate) => (
-        <div key={rate.id} className="flex items-center justify-between gap-4 py-2 text-sm">
-          <span className="text-zinc-200">
-            {rate.profiles?.name ?? "멤버"} · {rate.privilege_types?.name ?? "특전"}
-          </span>
-          <div className="flex items-center gap-3">
-            <span className="tabular-nums text-zinc-400">{Number(rate.rate) * 100}%</span>
-            <span className="text-xs text-zinc-600">{rate.valid_from} ~</span>
-            <button
-              type="button"
-              onClick={() => deleteRate(rate.id)}
-              className="rounded p-1 text-zinc-500 transition-colors hover:bg-white/10 hover:text-red-400"
-              aria-label="삭제"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+      {rates.map((rate) => {
+        const profile = Array.isArray(rate.profiles) ? rate.profiles[0] : rate.profiles;
+        const privilegeType = Array.isArray(rate.privilege_types) ? rate.privilege_types[0] : rate.privilege_types;
+
+        return (
+          <div key={rate.id} className="flex items-center justify-between gap-4 py-2 text-sm">
+            <span className="text-zinc-200">
+              {profile?.name ?? "멤버"} · {privilegeType?.name ?? "특전"}
+            </span>
+            <div className="flex items-center gap-3">
+              <span className="tabular-nums text-zinc-400">{Number(rate.rate) * 100}%</span>
+              <span className="text-xs text-zinc-600">{rate.valid_from} ~</span>
+              <button
+                type="button"
+                onClick={() => deleteRate(rate.id)}
+                className="rounded p-1 text-zinc-500 transition-colors hover:bg-white/10 hover:text-red-400"
+                aria-label="삭제"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

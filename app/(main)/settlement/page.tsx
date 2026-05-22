@@ -17,7 +17,10 @@ export default async function SettlementPage({
     getSettlementSummary(supabase, month),
     supabase.from("profiles").select("id,name").eq("role", "member").order("name"),
     supabase.from("privilege_types").select("id,name").eq("is_active", true).order("created_at"),
-    supabase.from("settlement_rates").select("*, profiles(name), privilege_types(name)").order("valid_from", { ascending: false }),
+    supabase
+      .from("settlement_rates")
+      .select("*, profiles!settlement_rates_member_id_fkey(name), privilege_types(name)")
+      .order("valid_from", { ascending: false }),
   ]);
 
   return (
