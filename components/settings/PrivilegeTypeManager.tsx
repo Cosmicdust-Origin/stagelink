@@ -3,6 +3,7 @@
 import { Plus, Save, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToastStore } from "@/lib/toast";
 
 type PrivilegeType = {
   id: string;
@@ -14,14 +15,19 @@ type PrivilegeType = {
 
 export function PrivilegeTypeManager({ types }: { types: PrivilegeType[] }) {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
+  const [localTypes, setLocalTypes] = useState(types);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("on_site");
   const [unitPrice, setUnitPrice] = useState("");
-  const [message, setMessage] = useState("");
+
+  function handleDeleted(id: string) {
+    setLocalTypes((prev) => prev.filter((t) => t.id !== id));
+    router.refresh();
+  }
 
   async function createType(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("");
     const response = await fetch("/api/privileges/types", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -33,13 +39,13 @@ export function PrivilegeTypeManager({ types }: { types: PrivilegeType[] }) {
     });
 
     if (!response.ok) {
-      setMessage("특전 항목을 추가하지 못했습니다.");
+      toast("특전 항목 추가 실패", "error");
       return;
     }
 
     setName("");
     setUnitPrice("");
-    setMessage("특전 항목을 추가했습니다.");
+    toast("특전 항목 추가 완료!");
     router.refresh();
   }
 
@@ -68,19 +74,19 @@ export function PrivilegeTypeManager({ types }: { types: PrivilegeType[] }) {
             추가
           </button>
         </div>
-        {message ? <p className="mt-3 text-sm text-zinc-400">{message}</p> : null}
       </form>
       <div className="space-y-2">
-        {types.map((type) => (
-          <PrivilegeTypeRow key={type.id} type={type} />
+        {localTypes.map((type) => (
+          <PrivilegeTypeRow key={type.id} type={type} onDeleted={handleDeleted} />
         ))}
       </div>
     </div>
   );
 }
 
-function PrivilegeTypeRow({ type }: { type: PrivilegeType }) {
+function PrivilegeTypeRow({ type, onDeleted }: { type: PrivilegeType; onDeleted: (id: string) => void }) {
   const router = useRouter();
+  const toast = useToastStore((s) => s.show);
   const [name, setName] = useState(type.name);
   const [category, setCategory] = useState(type.category);
   const [unitPrice, setUnitPrice] = useState(type.unit_price?.toString() ?? "");
@@ -97,13 +103,22 @@ function PrivilegeTypeRow({ type }: { type: PrivilegeType }) {
         is_active: isActive,
       }),
     });
-    if (response.ok) router.refresh();
+    if (response.ok) {
+      toast("저장 완료");
+      router.refresh();
+    } else {
+      toast("저장 실패", "error");
+    }
   }
 
   async function deleteType() {
-    if (!window.confirm("이 특전 항목을 비활성화할까요? 기존 기록은 유지됩니다.")) return;
+    if (!window.confirm(`'${name}' 항목을 삭제할까요?`)) return;
     const response = await fetch(`/api/privileges/types/${type.id}`, { method: "DELETE" });
-    if (response.ok) router.refresh();
+    if (response.ok) {
+      onDeleted(type.id);
+    } else {
+      toast("삭제 실패 — 이 항목을 참조하는 기록이 있을 수 있습니다.", "error");
+    }
   }
 
   return (

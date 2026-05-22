@@ -25,15 +25,9 @@ export async function DELETE(_: Request, { params }: Params) {
   try {
     const { typeId } = await params;
     const { supabase } = await requireRole(["admin"]);
-    const { data, error } = await supabase
-      .from("privilege_types")
-      .update({ is_active: false })
-      .eq("id", typeId)
-      .select("*")
-      .single();
-
+    const { error } = await supabase.from("privilege_types").delete().eq("id", typeId);
     if (error) throw error;
-    return json({ type: data });
+    return json({ success: true });
   } catch (error) {
     return handleApiError(error);
   }
