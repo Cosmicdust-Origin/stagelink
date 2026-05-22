@@ -34,10 +34,20 @@ export default async function PrivilegesPage() {
     byMember.set(member, row);
   }
 
-  const trendData = records.slice(0, 12).reverse().map((record) => ({
-    month: record.recorded_at.slice(5, 10),
-    total: record.quantity,
-  }));
+  // Daily totals per member — keyed by "MM-DD", value per member name
+  const memberNames = [...new Set(records.map((r) => r.profiles?.name ?? "멤버"))];
+  const dailyMap = new Map<string, Record<string, string | number>>();
+  for (const record of records) {
+    const day = record.recorded_at.slice(5, 10);
+    const member = record.profiles?.name ?? "멤버";
+    const row = dailyMap.get(day) ?? { date: day };
+    row[member] = Number(row[member] ?? 0) + record.quantity;
+    dailyMap.set(day, row);
+  }
+  const trendData = [...dailyMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, row]) => row)
+    .slice(-14);
 
   return (
     <div className="space-y-5">
@@ -53,8 +63,17 @@ export default async function PrivilegesPage() {
       />
       {records.length ? (
         <div className="grid gap-4 xl:grid-cols-2">
-          <MonthlyBarChart data={[...byMember.values()]} keys={typeNames} />
-          <TrendLineChart data={trendData} />
+          <MonthlyBarChart
+            title="멤버별 특전 누적 수량"
+            description="특전 종류별로 색상이 구분됩니다"
+            data={[...byMember.values()]}
+            keys={typeNames}
+          />
+          <TrendLineChart
+            title="날짜별 특전 수량 추이"
+            description={`멤버별 일간 합산 수량 · 최근 14일`}
+            data={trendData.length ? trendData : [{ date: "-", ...Object.fromEntries(memberNames.map((m) => [m, 0])) }]}
+          />
         </div>
       ) : (
         <EmptyState title="특전 기록이 없습니다" description="위 등록 영역에서 이벤트, 멤버, 특전 수량을 입력하세요." />
