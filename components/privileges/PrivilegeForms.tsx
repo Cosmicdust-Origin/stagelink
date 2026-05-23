@@ -4,7 +4,6 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToastStore } from "@/lib/toast";
-import { useCollapsibleClose } from "@/components/ui/CollapsibleSection";
 
 type Option = { id: string; name: string };
 type PrivilegeTypeOption = Option & { unit_price?: number | null };
@@ -12,7 +11,6 @@ type PrivilegeTypeOption = Option & { unit_price?: number | null };
 export function PrivilegeTypeCreateForm() {
   const router = useRouter();
   const toast = useToastStore((s) => s.show);
-  const closeSection = useCollapsibleClose();
   const [name, setName] = useState("");
   const [category, setCategory] = useState("on_site");
   const [unitPrice, setUnitPrice] = useState("");
@@ -27,9 +25,9 @@ export function PrivilegeTypeCreateForm() {
       });
       if (response.ok) {
         setName("");
-        toast("특전이 등록되었습니다.");
-        closeSection();
+        setUnitPrice("");
         router.refresh();
+        toast("특전이 등록되었습니다.");
       } else {
         const body = await response.json().catch(() => ({}));
         toast(body?.error ?? "등록에 실패했습니다.", "error");
@@ -71,7 +69,6 @@ export function PrivilegeRecordCreateForm({
 }) {
   const router = useRouter();
   const toast = useToastStore((s) => s.show);
-  const closeSection = useCollapsibleClose();
   const [eventId, setEventId] = useState("");
   const [memberId, setMemberId] = useState("");
   const [typeId, setTypeId] = useState("");
@@ -86,9 +83,9 @@ export function PrivilegeRecordCreateForm({
         body: JSON.stringify({ records: [{ member_id: memberId, privilege_type_id: typeId, quantity: Number(quantity) }] }),
       });
       if (response.ok) {
-        toast("수량이 등록되었습니다.");
-        closeSection();
+        setQuantity("1");
         router.refresh();
+        toast("수량이 등록되었습니다.");
       } else {
         const body = await response.json().catch(() => ({}));
         toast(body?.error ?? "등록에 실패했습니다.", "error");

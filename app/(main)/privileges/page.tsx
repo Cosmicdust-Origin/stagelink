@@ -109,10 +109,10 @@ export default async function PrivilegesPage({ searchParams }: Props) {
         </div>
         <MonthFilter value={selectedMonth} />
       </div>
-      <CollapsibleSection label="특전 등록">
+      <CollapsibleSection label="특전 등록" defaultOpen>
         <PrivilegeTypeCreateForm />
       </CollapsibleSection>
-      <CollapsibleSection label="수량 등록">
+      <CollapsibleSection label="수량 등록" defaultOpen>
         <PrivilegeRecordCreateForm
           events={(events ?? []).map((e) => ({ id: e.id, name: e.title }))}
           members={members ?? []}
