@@ -30,17 +30,18 @@ export async function PUT(request: Request, { params }: Params) {
       const groupIds = (body.group_ids as string[]) ?? [];
       delete body.group_ids;
 
+      // 마이그레이션 012 미적용 시 무시하고 계속 진행
       const { error: delErr } = await supabase
         .from("event_groups")
         .delete()
         .eq("event_id", eventId);
-      if (delErr) throw delErr;
-
-      if (groupIds.length > 0) {
+      if (delErr) {
+        console.warn("[event_groups delete failed]", delErr.message);
+      } else if (groupIds.length > 0) {
         const { error: insErr } = await supabase
           .from("event_groups")
           .insert(groupIds.map((gid) => ({ event_id: eventId, group_id: gid })));
-        if (insErr) throw insErr;
+        if (insErr) console.warn("[event_groups insert failed]", insErr.message);
       }
     }
 

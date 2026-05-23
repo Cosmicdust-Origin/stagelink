@@ -61,12 +61,16 @@ export async function POST(request: Request) {
       .single();
     if (error) throw error;
 
-    // event_groups 에 다중 그룹 연결
+    // event_groups 에 다중 그룹 연결 (마이그레이션 012 적용 후 동작)
     if (groupIds && groupIds.length > 0) {
       const { error: egErr } = await supabase
         .from("event_groups")
         .insert(groupIds.map((gid) => ({ event_id: event.id, group_id: gid })));
-      if (egErr) throw egErr;
+      if (egErr) {
+        // 테이블 미존재 등 마이그레이션 미적용 시 이벤트 생성은 유지하고 경고만 반환
+        console.warn("[event_groups insert failed]", egErr.message);
+        return json({ event, warning: "그룹 연결 실패 — 마이그레이션 012 실행 필요" }, 201);
+      }
     }
 
     if (checklistTemplateIds?.length) {
