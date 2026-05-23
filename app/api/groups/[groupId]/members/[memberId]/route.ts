@@ -53,14 +53,24 @@ export async function DELETE(_: Request, { params }: Params) {
     const { groupId, memberId } = await params;
     const { supabase } = await requireRole(["admin", "manager"]);
 
-    // group_members 에서 연결 해제 (members 레코드는 보존)
-    const { error } = await supabase
+    // group_members 연결 해제
+    const { error: gmErr } = await supabase
       .from("group_members")
       .delete()
       .eq("group_id", groupId)
       .eq("member_id", memberId);
+    if (gmErr) throw gmErr;
 
-    if (error) throw error;
+    // members 레코드 삭제 (privilege_records 등 연관 데이터가 있으면 DB가 차단)
+    const { error: mErr } = await supabase
+      .from("members")
+      .delete()
+      .eq("id", memberId);
+    if (mErr) {
+      // FK 제약으로 실패한 경우 (특전 기록 등이 있음) — group_members만 해제된 상태로 성공 처리
+      console.warn("members record kept (has related records):", mErr.message);
+    }
+
     return json({ success: true });
   } catch (error) {
     return handleApiError(error);
