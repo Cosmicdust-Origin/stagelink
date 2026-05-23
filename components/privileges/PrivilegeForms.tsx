@@ -91,10 +91,13 @@ export function PrivilegeRecordCreateForm({
   return (
     <form className="rounded-lg border border-white/10 bg-white/[0.04] p-4" onSubmit={createRecord}>
       <div className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_100px_auto]">
-        <select className="h-10 rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={eventId} onChange={(event) => setEventId(event.target.value)} required>
-          <option value="">이벤트</option>
-          {events.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
+        <div className="space-y-1">
+          <select className="h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={eventId} onChange={(event) => setEventId(event.target.value)} required>
+            <option value="">이벤트</option>
+            {events.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+          </select>
+          <p className="text-xs text-zinc-500">캘린더에 등록된 공연이 연동됩니다</p>
+        </div>
         <select className="h-10 rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={memberId} onChange={(event) => setMemberId(event.target.value)} required>
           <option value="">멤버</option>
           {members.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
