@@ -4,7 +4,7 @@ import { getWorkspaceId } from "@/lib/workspace";
 
 export async function GET(request: Request) {
   try {
-    const { supabase, user } = await requireRole(["admin"]);
+    const { supabase, user } = await requireRole(["admin", "manager"]);
     const wsId = await getWorkspaceId(supabase, user.id);
     if (!wsId) return json({ members: [] });
 

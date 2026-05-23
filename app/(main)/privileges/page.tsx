@@ -23,23 +23,12 @@ export default async function PrivilegesPage({ searchParams }: Props) {
 
   const wsId = user ? await getWorkspaceId(supabase, user.id) : null;
 
-  // Workspace-scoped member IDs for the "member" role filter
-  const memberIds: string[] = [];
-  if (wsId) {
-    const [{ data: workspace }, { data: wsMembers }] = await Promise.all([
-      supabase.from("workspaces").select("owner_id").eq("id", wsId).single(),
-      supabase.from("workspace_members").select("user_id").eq("workspace_id", wsId),
-    ]);
-    if (workspace?.owner_id) memberIds.push(workspace.owner_id);
-    (wsMembers ?? []).forEach((m: { user_id: string }) => memberIds.push(m.user_id));
-  }
-
   const [{ data }, { data: events }, { data: members }, { data: types }] = await Promise.all([
     wsId
       ? supabase
           .from("privilege_records")
           .select(
-            "quantity, recorded_at, privilege_type_id, profiles!privilege_records_member_id_fkey(name), privilege_types(name), events(start_at, title, workspace_id)",
+            "quantity, recorded_at, privilege_type_id, members!privilege_records_member_id_fkey(name), privilege_types(name), events(start_at, title, workspace_id)",
           )
           .eq("events.workspace_id", wsId)
           .order("recorded_at", { ascending: false })
@@ -53,12 +42,11 @@ export default async function PrivilegesPage({ searchParams }: Props) {
           .order("start_at", { ascending: false })
           .limit(50)
       : Promise.resolve({ data: [] }),
-    memberIds.length
+    wsId
       ? supabase
-          .from("profiles")
+          .from("members")
           .select("id,name")
-          .eq("role", "member")
-          .in("id", memberIds)
+          .eq("workspace_id", wsId)
           .order("name")
       : Promise.resolve({ data: [] }),
     wsId
@@ -74,7 +62,7 @@ export default async function PrivilegesPage({ searchParams }: Props) {
   const allRecords = (data ?? []) as unknown as Array<{
     quantity: number;
     recorded_at: string;
-    profiles: { name: string } | null;
+    members: { name: string } | null;
     privilege_types: { name: string } | null;
     events: { start_at: string; title: string } | null;
   }>;
@@ -87,18 +75,18 @@ export default async function PrivilegesPage({ searchParams }: Props) {
   const typeNames = [...new Set(records.map((r) => r.privilege_types?.name ?? "기타"))];
   const byMember = new Map<string, Record<string, string | number>>();
   for (const r of records) {
-    const member = r.profiles?.name ?? "멤버";
+    const member = r.members?.name ?? "멤버";
     const type = r.privilege_types?.name ?? "기타";
     const row = byMember.get(member) ?? { name: member };
     row[type] = Number(row[type] ?? 0) + r.quantity;
     byMember.set(member, row);
   }
 
-  const memberNames = [...new Set(records.map((r) => r.profiles?.name ?? "멤버"))];
+  const memberNames = [...new Set(records.map((r) => r.members?.name ?? "멤버"))];
   const dailyMap = new Map<string, Record<string, string | number>>();
   for (const r of records) {
     const day = (r.events?.start_at ?? r.recorded_at).slice(5, 10);
-    const member = r.profiles?.name ?? "멤버";
+    const member = r.members?.name ?? "멤버";
     const row = dailyMap.get(day) ?? { date: day };
     row[member] = Number(row[member] ?? 0) + r.quantity;
     dailyMap.set(day, row);

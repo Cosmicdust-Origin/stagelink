@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     let query = supabase
       .from("privilege_records")
       .select(
-        "*, privilege_types(name,category), events!inner(start_at,group_id,title,workspace_id), profiles!privilege_records_member_id_fkey(name)",
+        "*, privilege_types(name,category), events!inner(start_at,group_id,title,workspace_id), members!privilege_records_member_id_fkey(name)",
       )
       .eq("events.workspace_id", wsId)
       .order("recorded_at", { ascending: false });
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     }
     if (groupId) query = query.eq("events.group_id", groupId);
     if (memberId) query = query.eq("member_id", memberId);
-    if (profile.role === "member") query = query.eq("member_id", user.id);
+    // (member role 제거됨 — 필터 불필요)
 
     const { data, error } = await query;
     if (error) throw error;

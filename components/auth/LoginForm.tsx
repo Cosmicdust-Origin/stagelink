@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -19,15 +19,27 @@ export function LoginForm() {
     setIsLoading(true);
 
     const supabase = createClient();
+
+    // username → email 조회 (보안 정의 RPC, 비로그인 상태에서 호출 가능)
+    const { data: email, error: rpcError } = await supabase.rpc("get_email_by_username", {
+      p_username: username.trim(),
+    });
+
+    if (rpcError || !email) {
+      setIsLoading(false);
+      setError("아이디 또는 비밀번호를 확인해주세요.");
+      return;
+    }
+
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
+      email: email as string,
       password,
     });
 
     setIsLoading(false);
 
     if (signInError) {
-      setError("이메일 또는 비밀번호를 확인해주세요.");
+      setError("아이디 또는 비밀번호를 확인해주세요.");
       return;
     }
 
@@ -38,14 +50,14 @@ export function LoginForm() {
   return (
     <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
       <label className="block text-sm text-zinc-300">
-        이메일
+        아이디
         <input
           className="mt-2 h-11 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white"
-          type="email"
-          autoComplete="email"
-          placeholder="admin@stageoftheground.local"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          type="text"
+          autoComplete="username"
+          placeholder="Admin"
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
           required
         />
       </label>

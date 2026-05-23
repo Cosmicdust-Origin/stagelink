@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "manager" | "member";
+export type UserRole = "admin" | "manager";
 export type EventType = "live" | "rehearsal" | "filming" | "meeting" | "other";
 export type PrivilegeCategory = "on_site" | "event" | "mail_order" | "goods" | "other";
 export type TaskStatus = "todo" | "in_progress" | "done";
@@ -6,9 +6,19 @@ export type TaskStatus = "todo" | "in_progress" | "done";
 export type Profile = {
   id: string;
   name: string;
+  username: string | null;
+  email: string | null;
   role: UserRole;
   phone: string | null;
   joined_at: string | null;
+  created_at: string;
+};
+
+/** 아티스트/아이돌 멤버 (auth 계정 아님, 워크스페이스 소속 독립 데이터) */
+export type Member = {
+  id: string;
+  workspace_id: string;
+  name: string;
   created_at: string;
 };
 

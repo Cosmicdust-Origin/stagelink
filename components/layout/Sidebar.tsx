@@ -12,6 +12,7 @@ import {
   LogOut,
   Megaphone,
   Settings,
+  ShieldCheck,
   UserCircle,
   UsersRound,
 } from "lucide-react";
@@ -27,6 +28,7 @@ const icons: Record<string, React.ElementType> = {
   "/settlement": CircleDollarSign,
   "/tasks": ClipboardList,
   "/notice": Megaphone,
+  "/members": ShieldCheck,
   "/settings": Settings,
   "/account": UserCircle,
 };

@@ -56,7 +56,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && pathname.startsWith("/settlement")) {
+  // /members 는 admin 전용
+  if (user && pathname.startsWith("/members")) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")

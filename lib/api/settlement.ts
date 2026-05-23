@@ -22,7 +22,7 @@ type SettlementRecord = {
   member_id: string;
   quantity: number;
   privilege_types: { id: string; name: string; unit_price: number | string | null } | Array<{ id: string; name: string; unit_price: number | string | null }> | null;
-  profiles: { name: string } | Array<{ name: string }> | null;
+  members: { name: string } | Array<{ name: string }> | null;
   events: { title: string; start_at: string; group_id: string | null; groups: { name: string } | Array<{ name: string }> | null } | Array<{ title: string; start_at: string; group_id: string | null; groups: { name: string } | Array<{ name: string }> | null }> | null;
 };
 
@@ -42,7 +42,7 @@ export async function getSettlementSummary(
   let recordQuery = supabase
     .from("privilege_records")
     .select(
-      "member_id,quantity,privilege_types(id,name,unit_price),profiles!privilege_records_member_id_fkey(name),events!inner(title,start_at,group_id,workspace_id,groups(name))",
+      "member_id,quantity,privilege_types(id,name,unit_price),members!privilege_records_member_id_fkey(name),events!inner(title,start_at,group_id,workspace_id,groups(name))",
     )
     .gte("events.start_at", start)
     .lt("events.start_at", end);
@@ -76,7 +76,7 @@ export async function getSettlementSummary(
     const privilege = Array.isArray(record.privilege_types)
       ? record.privilege_types[0]
       : record.privilege_types;
-    const profile = Array.isArray(record.profiles) ? record.profiles[0] : record.profiles;
+    const profile = Array.isArray(record.members) ? record.members[0] : record.members;
     const event = Array.isArray(record.events) ? record.events[0] : record.events;
     const group = Array.isArray(event?.groups) ? event?.groups[0] : event?.groups;
     const rate = (rates ?? []).find(

@@ -13,6 +13,7 @@ import {
   Megaphone,
   Menu,
   Settings,
+  ShieldCheck,
   UserCircle,
   UsersRound,
   X,
@@ -29,6 +30,7 @@ const icons: Record<string, React.ElementType> = {
   "/settlement": CircleDollarSign,
   "/tasks": ClipboardList,
   "/notice": Megaphone,
+  "/members": ShieldCheck,
   "/settings": Settings,
   "/account": UserCircle,
 };

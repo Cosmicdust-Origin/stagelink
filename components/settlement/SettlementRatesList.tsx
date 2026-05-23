@@ -8,7 +8,7 @@ type Rate = {
   id: string;
   rate: number;
   valid_from: string;
-  profiles: { name: string } | { name: string }[] | null;
+  members: { name: string } | { name: string }[] | null;
   privilege_types: { name: string } | { name: string }[] | null;
 };
 
@@ -33,7 +33,7 @@ export function SettlementRatesList({ rates }: { rates: Rate[] }) {
   return (
     <div className="divide-y divide-white/10">
       {rates.map((rate) => {
-        const profile = Array.isArray(rate.profiles) ? rate.profiles[0] : rate.profiles;
+        const profile = Array.isArray(rate.members) ? rate.members[0] : rate.members;
         const privilegeType = Array.isArray(rate.privilege_types) ? rate.privilege_types[0] : rate.privilege_types;
 
         return (

@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 export function SignupForm() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -26,6 +27,10 @@ export function SignupForm() {
       setError("비밀번호는 8자 이상이어야 합니다.");
       return;
     }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setError("아이디는 영문, 숫자, 밑줄(_)만 사용할 수 있습니다.");
+      return;
+    }
 
     setLoading(true);
 
@@ -34,7 +39,11 @@ export function SignupForm() {
       email,
       password,
       options: {
-        data: { role: "admin", name: name.trim() },
+        data: {
+          role: "admin",
+          name: name.trim(),
+          username: username.trim(),
+        },
       },
     });
 
@@ -49,8 +58,6 @@ export function SignupForm() {
       return;
     }
 
-    // signUp returns a session directly if email confirmation is disabled.
-    // Redirect to workspace creation.
     router.push("/workspace/new");
     router.refresh();
   }
@@ -68,7 +75,21 @@ export function SignupForm() {
         />
       </label>
       <label className="block text-sm text-zinc-300">
+        아이디
+        <span className="ml-1 text-xs text-zinc-500">(로그인에 사용, 영문·숫자·_)</span>
+        <input
+          className="mt-2 h-11 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white placeholder-zinc-600"
+          type="text"
+          autoComplete="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Admin"
+          required
+        />
+      </label>
+      <label className="block text-sm text-zinc-300">
         이메일
+        <span className="ml-1 text-xs text-zinc-500">(비밀번호 재설정 시 사용)</span>
         <input
           className="mt-2 h-11 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white placeholder-zinc-600"
           type="email"

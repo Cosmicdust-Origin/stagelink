@@ -20,26 +20,14 @@ export default async function SettlementPage({
 
   const wsId = user ? await getWorkspaceId(supabase, user.id) : null;
 
-  // Workspace-scoped member IDs for dropdowns
-  const memberIds: string[] = [];
-  if (wsId) {
-    const [{ data: workspace }, { data: wsMembers }] = await Promise.all([
-      supabase.from("workspaces").select("owner_id").eq("id", wsId).single(),
-      supabase.from("workspace_members").select("user_id").eq("workspace_id", wsId),
-    ]);
-    if (workspace?.owner_id) memberIds.push(workspace.owner_id);
-    (wsMembers ?? []).forEach((m: { user_id: string }) => memberIds.push(m.user_id));
-  }
-
-  const [members, { data: profiles }, { data: types }, { data: rates }] = await Promise.all([
+  const [members, { data: artistMembers }, { data: types }, { data: rates }] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     wsId ? getSettlementSummary(supabase as any, month, wsId) : Promise.resolve([]),
-    memberIds.length
+    wsId
       ? supabase
-          .from("profiles")
+          .from("members")
           .select("id,name")
-          .eq("role", "member")
-          .in("id", memberIds)
+          .eq("workspace_id", wsId)
           .order("name")
       : Promise.resolve({ data: [] }),
     wsId
@@ -53,7 +41,7 @@ export default async function SettlementPage({
     wsId
       ? supabase
           .from("settlement_rates")
-          .select("*, profiles!settlement_rates_member_id_fkey(name), privilege_types(name)")
+          .select("*, members!settlement_rates_member_id_fkey(name), privilege_types(name)")
           .eq("workspace_id", wsId)
           .order("valid_from", { ascending: false })
       : Promise.resolve({ data: [] }),
@@ -74,7 +62,7 @@ export default async function SettlementPage({
         </a>
       </div>
       <CollapsibleSection label="정산 비율 등록">
-        <RateCreateForm members={profiles ?? []} types={types ?? []} />
+        <RateCreateForm members={artistMembers ?? []} types={types ?? []} />
       </CollapsibleSection>
       <section className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
         <h2 className="font-semibold text-white">등록된 정산 비율</h2>

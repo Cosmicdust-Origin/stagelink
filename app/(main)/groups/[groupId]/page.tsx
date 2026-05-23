@@ -12,14 +12,13 @@ export default async function GroupDetailPage({ params }: Params) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [{ data: group }, { data: members }, { data: events }, { data: profiles }, { data: profile }] = await Promise.all([
+  const [{ data: group }, { data: members }, { data: events }, { data: profile }] = await Promise.all([
     supabase.from("groups").select("*").eq("id", groupId).single(),
-    supabase.from("group_members").select("*, profiles(*)").eq("group_id", groupId),
+    supabase.from("group_members").select("*, members(id,name)").eq("group_id", groupId),
     supabase.from("events").select("*").eq("group_id", groupId).order("start_at", { ascending: false }).limit(5),
-    supabase.from("profiles").select("id,name,role").order("name"),
     user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
   ]);
-  const canEdit = profile?.role === "admin";
+  const canEdit = profile?.role === "admin" || profile?.role === "manager";
 
   // Current month range
   const now = new Date();
@@ -29,18 +28,18 @@ export default async function GroupDetailPage({ params }: Params) {
   const rangeEnd = new Date(year, mon, 1).toISOString().slice(0, 10);
 
   // Fetch this month's privilege records for the group's members
-  const memberIds = (members ?? []).map((m) => m.user_id).filter(Boolean);
+  const memberIds = (members ?? []).map((m) => m.member_id).filter(Boolean);
   const { data: rawRecords } = memberIds.length
     ? await supabase
         .from("privilege_records")
-        .select("quantity, recorded_at, member_id, profiles!privilege_records_member_id_fkey(name), privilege_types(name), events(start_at)")
+        .select("quantity, recorded_at, member_id, members!privilege_records_member_id_fkey(name), privilege_types(name), events(start_at)")
         .in("member_id", memberIds)
     : { data: [] as unknown[] };
 
   type PrivRow = {
     quantity: number;
     recorded_at: string;
-    profiles: { name: string } | null;
+    members: { name: string } | null;
     privilege_types: { name: string } | null;
     events: { start_at: string } | null;
   };
@@ -54,11 +53,11 @@ export default async function GroupDetailPage({ params }: Params) {
   const typeNames = [...new Set(monthRecords.map((r) => r.privilege_types?.name ?? "기타"))];
   const memberMap = new Map<string, Record<string, string | number>>();
   for (const m of members ?? []) {
-    const name = (m.profiles as { name?: string } | null)?.name ?? "멤버";
+    const name = (m.members as { name?: string } | null)?.name ?? "멤버";
     memberMap.set(name, { name });
   }
   for (const r of monthRecords) {
-    const memberName = r.profiles?.name ?? "멤버";
+    const memberName = r.members?.name ?? "멤버";
     const typeName = r.privilege_types?.name ?? "기타";
     const row = memberMap.get(memberName) ?? { name: memberName };
     row[typeName] = Number(row[typeName] ?? 0) + r.quantity;
@@ -80,7 +79,7 @@ export default async function GroupDetailPage({ params }: Params) {
           />
         ) : null}
       </section>
-      <MemberManager groupId={groupId} members={members ?? []} profiles={profiles ?? []} canEdit={canEdit} />
+      <MemberManager groupId={groupId} members={members ?? []} canEdit={canEdit} />
       <section className="grid gap-4 lg:grid-cols-2">
         <div>
           <h2 className="mb-3 font-semibold text-white">최근 일정</h2>

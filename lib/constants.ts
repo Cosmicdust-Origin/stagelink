@@ -27,9 +27,10 @@ export const navItems = [
   { href: "/calendar", label: "캘린더", adminOnly: false },
   { href: "/groups", label: "그룹 관리", adminOnly: false },
   { href: "/privileges", label: "특전 현황", adminOnly: false },
-  { href: "/settlement", label: "정산 관리", adminOnly: true },
+  { href: "/settlement", label: "정산 관리", adminOnly: false },
   { href: "/tasks", label: "업무 보드", adminOnly: false },
   { href: "/notice", label: "공지 게시판", adminOnly: false },
+  { href: "/members", label: "회원 관리", adminOnly: true },
   { href: "/settings", label: "설정", adminOnly: false },
   { href: "/account", label: "마이페이지", adminOnly: false },
 ] as const;

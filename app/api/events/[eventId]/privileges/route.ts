@@ -15,7 +15,7 @@ export async function GET(_: Request, { params }: Params) {
     const { supabase } = await requireRole(["admin", "manager"]);
     const { data, error } = await supabase
       .from("privilege_records")
-      .select("*, profiles(name), privilege_types(name,unit_price)")
+      .select("*, members(name), privilege_types(name,unit_price)")
       .eq("event_id", eventId);
 
     if (error) throw error;
