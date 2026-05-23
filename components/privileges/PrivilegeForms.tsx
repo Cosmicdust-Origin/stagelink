@@ -19,18 +19,23 @@ export function PrivilegeTypeCreateForm() {
 
   async function createType(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const response = await fetch("/api/privileges/types", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, category, unit_price: unitPrice ? Number(unitPrice) : null }),
-    });
-    if (response.ok) {
-      setName("");
-      toast("특전 등록 완료!");
-      closeSection();
-      router.refresh();
-    } else {
-      toast("등록 실패", "error");
+    try {
+      const response = await fetch("/api/privileges/types", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, category, unit_price: unitPrice ? Number(unitPrice) : null }),
+      });
+      if (response.ok) {
+        setName("");
+        toast("특전이 등록되었습니다.");
+        closeSection();
+        router.refresh();
+      } else {
+        const body = await response.json().catch(() => ({}));
+        toast(body?.error ?? "등록에 실패했습니다.", "error");
+      }
+    } catch {
+      toast("네트워크 오류가 발생했습니다.", "error");
     }
   }
 
@@ -74,17 +79,22 @@ export function PrivilegeRecordCreateForm({
 
   async function createRecord(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const response = await fetch(`/api/events/${eventId}/privileges`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ records: [{ member_id: memberId, privilege_type_id: typeId, quantity: Number(quantity) }] }),
-    });
-    if (response.ok) {
-      toast("수량 등록 완료!");
-      closeSection();
-      router.refresh();
-    } else {
-      toast("등록 실패", "error");
+    try {
+      const response = await fetch(`/api/events/${eventId}/privileges`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ records: [{ member_id: memberId, privilege_type_id: typeId, quantity: Number(quantity) }] }),
+      });
+      if (response.ok) {
+        toast("수량이 등록되었습니다.");
+        closeSection();
+        router.refresh();
+      } else {
+        const body = await response.json().catch(() => ({}));
+        toast(body?.error ?? "등록에 실패했습니다.", "error");
+      }
+    } catch {
+      toast("네트워크 오류가 발생했습니다.", "error");
     }
   }
 
