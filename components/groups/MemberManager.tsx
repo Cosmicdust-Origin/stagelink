@@ -70,7 +70,8 @@ export function MemberManager({
     });
 
     if (!response.ok) {
-      setError("멤버를 추가하지 못했습니다.");
+      const body = await response.json().catch(() => ({}));
+      setError(body?.error ?? "멤버를 추가하지 못했습니다.");
       return;
     }
 
