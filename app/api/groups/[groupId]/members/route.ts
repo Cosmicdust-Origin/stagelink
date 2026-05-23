@@ -31,6 +31,15 @@ export async function POST(request: Request, { params }: Params) {
     const body = await parseJson<MemberBody>(request);
     if (!body.name?.trim()) return json({ error: "이름을 입력하세요" }, 400);
 
+    // 중복 이름 체크
+    const { data: existing } = await supabase
+      .from("members")
+      .select("id")
+      .eq("workspace_id", wsId)
+      .eq("name", body.name.trim())
+      .maybeSingle();
+    if (existing) return json({ error: `'${body.name.trim()}' 멤버가 이미 존재합니다.` }, 409);
+
     // 1) members 테이블에 독립 멤버 생성
     const { data: newMember, error: memberErr } = await supabase
       .from("members")
