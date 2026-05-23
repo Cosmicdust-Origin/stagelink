@@ -61,11 +61,14 @@ export default async function SettlementPage({
           PDF 내보내기
         </a>
       </div>
-      <CollapsibleSection label="정산 비율 등록">
+      <CollapsibleSection label="정산 비율 설정 (비율 방식 특전)">
         <RateCreateForm members={artistMembers ?? []} types={types ?? []} />
       </CollapsibleSection>
       <section className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-        <h2 className="font-semibold text-white">등록된 정산 비율</h2>
+        <div className="flex items-baseline justify-between">
+          <h2 className="font-semibold text-white">등록된 정산 비율</h2>
+          <p className="text-xs text-zinc-500">금액 방식 특전은 단가 기준 자동 계산됩니다</p>
+        </div>
         <div className="mt-3">
           <SettlementRatesList rates={rates ?? []} />
         </div>

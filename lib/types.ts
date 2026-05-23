@@ -61,6 +61,7 @@ export type PrivilegeRecord = {
 };
 
 export type SettlementLine = {
+  record_id: string;
   privilege_type: string;
   event_name: string;
   event_date: string;
@@ -68,6 +69,7 @@ export type SettlementLine = {
   unit_price: number;
   rate: number;
   amount: number;
+  settled_at: string | null;
 };
 
 export type SettlementMemberSummary = {
@@ -76,4 +78,6 @@ export type SettlementMemberSummary = {
   group_name: string;
   breakdown: SettlementLine[];
   total: number;
+  paid: number;
+  unpaid: number;
 };

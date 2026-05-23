@@ -26,6 +26,8 @@ type PrivilegeTypeRef = {
 };
 
 type SettlementRecord = {
+  id: string;
+  settled_at: string | null;
   member_id: string;
   quantity: number;
   privilege_types: PrivilegeTypeRef | PrivilegeTypeRef[] | null;
@@ -60,7 +62,7 @@ export async function getSettlementSummary(
   let recordQuery = supabase
     .from("privilege_records")
     .select(
-      "member_id,quantity,privilege_types(id,name,unit_price,settlement_type),members!privilege_records_member_id_fkey(name),events(title,start_at,group_id,workspace_id,groups(name))",
+      "id,settled_at,member_id,quantity,privilege_types(id,name,unit_price,settlement_type),members!privilege_records_member_id_fkey(name),events(title,start_at,group_id,workspace_id,groups(name))",
     );
 
   if (workspaceId) {
@@ -70,7 +72,7 @@ export async function getSettlementSummary(
   const { data: recordRows, error } = await recordQuery;
   if (error) throw error;
 
-  // 날짜 필터를 클라이언트에서 처리 (PostgREST 임베디드 필터 불안정 이슈 우회)
+  // 날짜 필터는 클라이언트에서 처리 (PostgREST 임베디드 필터 우회)
   const startDate = start.slice(0, 10);
   const endDate = end.slice(0, 10);
   const records = ((recordRows as SettlementRecord[] | null) ?? []).filter((r) => {
@@ -82,7 +84,7 @@ export async function getSettlementSummary(
 
   let rateQuery = supabase
     .from("settlement_rates")
-    .select("member_id,privilege_type_id,rate,fixed_amount,valid_from,valid_until,workspace_id")
+    .select("member_id,privilege_type_id,rate,valid_from,valid_until,workspace_id")
     .lte("valid_from", `${month}-31`)
     .or(`valid_until.is.null,valid_until.gte.${month}-01`)
     .order("valid_from", { ascending: false });
@@ -97,7 +99,7 @@ export async function getSettlementSummary(
 
   const grouped = new Map<string, SettlementMemberSummary>();
 
-  for (const record of records ?? []) {
+  for (const record of records) {
     const privilege = Array.isArray(record.privilege_types)
       ? record.privilege_types[0]
       : record.privilege_types;
@@ -106,9 +108,7 @@ export async function getSettlementSummary(
     const group = Array.isArray(event?.groups) ? event?.groups[0] : event?.groups;
 
     const rateEntry = (rates ?? []).find(
-      (candidate) =>
-        candidate.member_id === record.member_id &&
-        candidate.privilege_type_id === privilege?.id,
+      (c) => c.member_id === record.member_id && c.privilege_type_id === privilege?.id,
     );
 
     const qty = Number(record.quantity ?? 0);
@@ -119,11 +119,9 @@ export async function getSettlementSummary(
     let numericRate: number;
 
     if (settlementType === "fixed") {
-      // 금액 방식: 단가가 곧 정산 금액, 비율 불필요
       amount = qty * unitPrice;
       numericRate = 1;
     } else {
-      // 비율 방식: 수량 × 단가 × 비율
       numericRate = Number(rateEntry?.rate ?? 0);
       amount = qty * unitPrice * numericRate;
     }
@@ -135,11 +133,14 @@ export async function getSettlementSummary(
         group_name: group?.name ?? "-",
         breakdown: [],
         total: 0,
+        paid: 0,
+        unpaid: 0,
       });
     }
 
     const summary = grouped.get(record.member_id)!;
     summary.breakdown.push({
+      record_id: record.id,
       privilege_type: privilege?.name ?? "Unknown",
       event_name: event?.title ?? "-",
       event_date: event?.start_at?.slice(0, 10) ?? "-",
@@ -147,8 +148,14 @@ export async function getSettlementSummary(
       unit_price: unitPrice,
       rate: numericRate,
       amount,
+      settled_at: record.settled_at ?? null,
     });
     summary.total += amount;
+    if (record.settled_at) {
+      summary.paid += amount;
+    } else {
+      summary.unpaid += amount;
+    }
   }
 
   return [...grouped.values()];
