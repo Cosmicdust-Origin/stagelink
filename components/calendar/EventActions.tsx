@@ -5,33 +5,25 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToastStore } from "@/lib/toast";
 
-type ProfileOption = {
-  id: string;
-  name: string;
-  role: string;
-};
-
 export function EventActions({
   eventId,
   initialTitle,
   initialVenue,
   initialMemo,
-  initialManagerId,
-  profiles,
+  initialOnSiteManager,
 }: {
   eventId: string;
   initialTitle: string;
   initialVenue: string;
   initialMemo: string;
-  initialManagerId: string;
-  profiles: ProfileOption[];
+  initialOnSiteManager: string;
 }) {
   const router = useRouter();
   const toast = useToastStore((s) => s.show);
   const [title, setTitle] = useState(initialTitle);
   const [venue, setVenue] = useState(initialVenue);
   const [memo, setMemo] = useState(initialMemo);
-  const [managerId, setManagerId] = useState(initialManagerId);
+  const [onSiteManager, setOnSiteManager] = useState(initialOnSiteManager);
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,7 +34,7 @@ export function EventActions({
         title,
         venue: venue || null,
         memo: memo || null,
-        manager_id: managerId || null,
+        on_site_manager: onSiteManager || null,
       }),
     });
 
@@ -67,44 +59,46 @@ export function EventActions({
         <input
           className="h-10 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white"
           value={title}
-          onChange={(event) => setTitle(event.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
           aria-label="일정명"
           placeholder="일정명"
         />
         <input
           className="h-10 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white"
           value={venue}
-          onChange={(event) => setVenue(event.target.value)}
+          onChange={(e) => setVenue(e.target.value)}
           placeholder="장소"
           aria-label="장소"
         />
         <input
           className="h-10 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white"
           value={memo}
-          onChange={(event) => setMemo(event.target.value)}
+          onChange={(e) => setMemo(e.target.value)}
           placeholder="메모"
           aria-label="메모"
         />
-        <select
+        <input
           className="h-10 rounded-md border border-white/10 bg-white/[0.04] px-3 text-white"
-          value={managerId}
-          onChange={(event) => setManagerId(event.target.value)}
+          value={onSiteManager}
+          onChange={(e) => setOnSiteManager(e.target.value)}
+          placeholder="현장 담당자"
           aria-label="현장 담당자"
-        >
-          <option value="">현장 담당자 미지정</option>
-          {profiles.map((profile) => (
-            <option key={profile.id} value={profile.id}>
-              {profile.name}
-            </option>
-          ))}
-        </select>
+        />
       </div>
       <div className="mt-3 flex gap-2">
-        <button className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-[#E8457A] text-sm font-semibold text-white" type="submit">
+        <button
+          className="flex h-10 flex-1 items-center justify-center gap-2 rounded-md bg-[#E8457A] text-sm font-semibold text-white"
+          type="submit"
+        >
           <Save className="h-4 w-4" />
           저장
         </button>
-        <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-red-500/40 text-red-300" type="button" onClick={remove} title="삭제">
+        <button
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-red-500/40 text-red-300"
+          type="button"
+          onClick={remove}
+          title="삭제"
+        >
           <Trash2 className="h-4 w-4" />
         </button>
       </div>

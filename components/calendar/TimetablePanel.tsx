@@ -8,6 +8,7 @@ import { useToastStore } from "@/lib/toast";
 type Entry = {
   id: string;
   start_time: string;
+  end_time: string | null;
   group_id: string | null;
   note: string | null;
   groups: { name: string } | { name: string }[] | null;
@@ -31,7 +32,8 @@ export function TimetablePanel({
 }) {
   const router = useRouter();
   const toast = useToastStore((s) => s.show);
-  const [time, setTime] = useState("18:00");
+  const [startTime, setStartTime] = useState("18:00");
+  const [endTime, setEndTime] = useState("");
   const [groupId, setGroupId] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -42,13 +44,15 @@ export function TimetablePanel({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        start_time: time,
+        start_time: startTime,
+        end_time: endTime || null,
         group_id: groupId || null,
         note: note || null,
         sort_order: entries.length,
       }),
     });
     setNote("");
+    setEndTime("");
     toast("타임테이블 추가됨");
     router.refresh();
   }
@@ -72,8 +76,13 @@ export function TimetablePanel({
     router.refresh();
   }
 
-  function fmt(timeValue: string) {
-    return timeValue.slice(0, 5);
+  function fmt(t: string) {
+    return t.slice(0, 5);
+  }
+
+  function timeRange(entry: Entry) {
+    const start = fmt(entry.start_time);
+    return entry.end_time ? `${start} ~ ${fmt(entry.end_time)}` : start;
   }
 
   function getGroupName(entry: Entry) {
@@ -86,33 +95,52 @@ export function TimetablePanel({
       <h2 className="font-semibold text-white">타임테이블</h2>
 
       {canEdit && (
-        <form className="mt-3 grid grid-cols-[80px_1fr_1fr_36px] gap-2" onSubmit={addEntry}>
-          <input
-            className={inputCls}
-            type="text"
-            pattern="[0-2][0-9]:[0-5][0-9]"
-            placeholder="18:30"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
-          />
-          <select className={inputCls} value={groupId} onChange={(e) => setGroupId(e.target.value)}>
+        <form className="mt-3 flex flex-wrap gap-2" onSubmit={addEntry}>
+          {/* 시작 ~ 종료 */}
+          <div className="flex items-center gap-1">
+            <input
+              className={inputCls + " w-20"}
+              type="text"
+              pattern="[0-2][0-9]:[0-5][0-9]"
+              placeholder="19:00"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              required
+            />
+            <span className="text-xs text-zinc-500">~</span>
+            <input
+              className={inputCls + " w-20"}
+              type="text"
+              pattern="[0-2][0-9]:[0-5][0-9]"
+              placeholder="21:30"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+            />
+          </div>
+          <select
+            className={inputCls + " flex-1 min-w-[100px]"}
+            value={groupId}
+            onChange={(e) => setGroupId(e.target.value)}
+          >
             <option value="">전체</option>
             {groups.map((group) => (
-              <option key={group.id} value={group.id}>
-                {group.name}
-              </option>
+              <option key={group.id} value={group.id}>{group.name}</option>
             ))}
           </select>
-          <input className={inputCls} placeholder="메모" value={note} onChange={(e) => setNote(e.target.value)} />
-          <button className="flex h-9 w-9 items-center justify-center rounded-md bg-[#E8457A] text-white" type="submit">
+          <input
+            className={inputCls + " flex-1 min-w-[100px]"}
+            placeholder="메모"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+          <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#E8457A] text-white" type="submit">
             <Plus className="h-4 w-4" />
           </button>
         </form>
       )}
 
       {entries.length > 0 && (
-        <div className="mt-3 grid grid-cols-[80px_1fr_1fr_36px] gap-2 px-2 text-xs text-zinc-500">
+        <div className="mt-3 grid grid-cols-[1fr_1fr_1fr_36px] gap-2 px-2 text-xs text-zinc-500">
           <span>시간</span>
           <span>그룹</span>
           <span>메모</span>
@@ -121,40 +149,67 @@ export function TimetablePanel({
       )}
 
       <ul className="mt-1 space-y-1">
-        {entries.length === 0 && <li className="py-4 text-center text-sm text-zinc-500">타임테이블이 없습니다</li>}
+        {entries.length === 0 && (
+          <li className="py-4 text-center text-sm text-zinc-500">타임테이블이 없습니다</li>
+        )}
         {entries.map((entry) => (
-          <li key={entry.id} className="grid grid-cols-[80px_1fr_1fr_36px] items-center gap-2 rounded-md bg-white/[0.03] px-2 py-1.5">
+          <li
+            key={entry.id}
+            className="grid grid-cols-[1fr_1fr_1fr_36px] items-center gap-2 rounded-md bg-white/[0.03] px-2 py-1.5"
+          >
+            {/* 시간 컬럼: 시작~종료 */}
             {canEdit ? (
-              <input
-                className={rowInputCls + " font-mono"}
-                type="text"
-                pattern="[0-2][0-9]:[0-5][0-9]"
-                defaultValue={fmt(entry.start_time)}
-                onBlur={(e) => updateField(entry.id, "start_time", e.target.value)}
-              />
+              <div className="flex items-center gap-1">
+                <input
+                  className={rowInputCls + " font-mono w-14"}
+                  type="text"
+                  pattern="[0-2][0-9]:[0-5][0-9]"
+                  defaultValue={fmt(entry.start_time)}
+                  onBlur={(e) => updateField(entry.id, "start_time", e.target.value)}
+                />
+                <span className="text-zinc-600">~</span>
+                <input
+                  className={rowInputCls + " font-mono w-14"}
+                  type="text"
+                  pattern="[0-2][0-9]:[0-5][0-9]"
+                  defaultValue={entry.end_time ? fmt(entry.end_time) : ""}
+                  placeholder="종료"
+                  onBlur={(e) => updateField(entry.id, "end_time", e.target.value || null)}
+                />
+              </div>
             ) : (
-              <span className="font-mono text-sm text-zinc-300">{fmt(entry.start_time)}</span>
+              <span className="font-mono text-sm text-zinc-300">{timeRange(entry)}</span>
             )}
 
+            {/* 그룹 컬럼 */}
             {canEdit ? (
-              <select className={rowInputCls + " bg-[#101114]"} defaultValue={entry.group_id ?? ""} onBlur={(e) => updateField(entry.id, "group_id", e.target.value || null)}>
+              <select
+                className={rowInputCls + " bg-[#101114]"}
+                defaultValue={entry.group_id ?? ""}
+                onBlur={(e) => updateField(entry.id, "group_id", e.target.value || null)}
+              >
                 <option value="">전체</option>
                 {groups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
+                  <option key={group.id} value={group.id}>{group.name}</option>
                 ))}
               </select>
             ) : (
               <span className="text-sm text-zinc-200">{getGroupName(entry)}</span>
             )}
 
+            {/* 메모 컬럼 */}
             {canEdit ? (
-              <input className={rowInputCls} defaultValue={entry.note ?? ""} placeholder="메모" onBlur={(e) => updateField(entry.id, "note", e.target.value || null)} />
+              <input
+                className={rowInputCls}
+                defaultValue={entry.note ?? ""}
+                placeholder="메모"
+                onBlur={(e) => updateField(entry.id, "note", e.target.value || null)}
+              />
             ) : (
               <span className="text-sm text-zinc-500">{entry.note ?? ""}</span>
             )}
 
+            {/* 삭제 */}
             {canEdit ? (
               <button
                 type="button"

@@ -23,21 +23,19 @@ export default async function EventDetailPage({ params }: Params) {
     { data: members },
     { data: profile },
     { data: groups },
-    { data: profiles },
   ] = await Promise.all([
-    supabase.from("events").select("*, groups(name), profiles!events_manager_id_fkey(name)").eq("id", eventId).single(),
+    supabase.from("events").select("*, groups(name)").eq("id", eventId).single(),
     supabase.from("event_checklists").select("*").eq("event_id", eventId).order("sort_order"),
-    supabase.from("timetable_entries").select("id,start_time,group_id,note,sort_order,groups(name)").eq("event_id", eventId).order("sort_order"),
+    supabase.from("timetable_entries").select("id,start_time,end_time,group_id,note,sort_order,groups(name)").eq("event_id", eventId).order("sort_order"),
     supabase.from("privilege_types").select("*").eq("is_active", true).order("created_at"),
     supabase.from("privilege_records").select("*").eq("event_id", eventId),
     supabase.from("profiles").select("*").eq("role", "member").order("name"),
     user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
     supabase.from("groups").select("id,name").order("name"),
-    supabase.from("profiles").select("id,name,role").order("name"),
   ]);
 
   const canEdit = profile?.role === "admin" || profile?.role === "manager";
-  const managerName = event?.profiles?.name;
+  const managerName = event?.on_site_manager as string | null | undefined;
 
   return (
     <div className="space-y-5">
@@ -60,8 +58,7 @@ export default async function EventDetailPage({ params }: Params) {
             initialTitle={event.title}
             initialVenue={event.venue ?? ""}
             initialMemo={event.memo ?? ""}
-            initialManagerId={event.manager_id ?? ""}
-            profiles={profiles ?? []}
+            initialOnSiteManager={(event.on_site_manager as string | null) ?? ""}
           />
         ) : null}
       </section>
