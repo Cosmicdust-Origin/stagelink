@@ -1,11 +1,13 @@
 import { MonthFilter } from "@/components/privileges/MonthFilter";
 import { PrivilegeRecordCreateForm, PrivilegeTypeCreateForm } from "@/components/privileges/PrivilegeForms";
+import { PrivilegeRecordsList } from "@/components/privileges/PrivilegeRecordsList";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { MonthlyBarChart } from "@/components/privileges/MonthlyBarChart";
 import { TrendLineChart } from "@/components/privileges/TrendLineChart";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
+import type { PrivilegeRecordRow } from "@/components/privileges/PrivilegeRecordsList";
 
 type Props = { searchParams: Promise<{ month?: string }> };
 
@@ -28,7 +30,7 @@ export default async function PrivilegesPage({ searchParams }: Props) {
       ? supabase
           .from("privilege_records")
           .select(
-            "quantity, recorded_at, privilege_type_id, members!privilege_records_member_id_fkey(name), privilege_types(name), events(start_at, title, workspace_id)",
+            "id, quantity, recorded_at, members!privilege_records_member_id_fkey(name), privilege_types(name), events(start_at, title, workspace_id)",
           )
           .eq("events.workspace_id", wsId)
           .order("recorded_at", { ascending: false })
@@ -60,6 +62,7 @@ export default async function PrivilegesPage({ searchParams }: Props) {
   ]);
 
   const allRecords = (data ?? []) as unknown as Array<{
+    id: string;
     quantity: number;
     recorded_at: string;
     members: { name: string } | null;
@@ -72,6 +75,7 @@ export default async function PrivilegesPage({ searchParams }: Props) {
     return eventDate >= rangeStart && eventDate < rangeEnd;
   });
 
+  // 차트용 집계
   const typeNames = [...new Set(records.map((r) => r.privilege_types?.name ?? "기타"))];
   const byMember = new Map<string, Record<string, string | number>>();
   for (const r of records) {
@@ -95,6 +99,16 @@ export default async function PrivilegesPage({ searchParams }: Props) {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, row]) => row);
 
+  // 기록 목록 (수정/삭제용)
+  const recordRows: PrivilegeRecordRow[] = records.map((r) => ({
+    id: r.id,
+    quantity: r.quantity,
+    event_title: r.events?.title ?? "—",
+    event_date: r.events?.start_at?.slice(0, 10) ?? r.recorded_at.slice(0, 10),
+    member_name: r.members?.name ?? "—",
+    privilege_type: r.privilege_types?.name ?? "—",
+  }));
+
   const monthLabel = `${year}년 ${mon}월`;
   const hasData = records.length > 0;
 
@@ -109,9 +123,11 @@ export default async function PrivilegesPage({ searchParams }: Props) {
         </div>
         <MonthFilter value={selectedMonth} />
       </div>
+
       <CollapsibleSection label="특전 등록" defaultOpen>
         <PrivilegeTypeCreateForm />
       </CollapsibleSection>
+
       <CollapsibleSection label="수량 등록" defaultOpen>
         <PrivilegeRecordCreateForm
           events={(events ?? []).map((e) => ({ id: e.id, name: e.title }))}
@@ -119,24 +135,36 @@ export default async function PrivilegesPage({ searchParams }: Props) {
           types={types ?? []}
         />
       </CollapsibleSection>
+
       {hasData ? (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <MonthlyBarChart
-            title={`${monthLabel} 멤버별 특전 수량`}
-            description="특전 종류별로 색상이 구분됩니다"
-            data={[...byMember.values()]}
-            keys={typeNames}
-          />
-          <TrendLineChart
-            title={`${monthLabel} 공연별 특전 수량 추이`}
-            description="공연 날짜 기준 · 멤버별 합산"
-            data={
-              trendData.length
-                ? trendData
-                : [{ date: "-", ...Object.fromEntries(memberNames.map((m) => [m, 0])) }]
-            }
-          />
-        </div>
+        <>
+          <div className="grid gap-4 xl:grid-cols-2">
+            <MonthlyBarChart
+              title={`${monthLabel} 멤버별 특전 수량`}
+              description="특전 종류별로 색상이 구분됩니다"
+              data={[...byMember.values()]}
+              keys={typeNames}
+            />
+            <TrendLineChart
+              title={`${monthLabel} 공연별 특전 수량 추이`}
+              description="공연 날짜 기준 · 멤버별 합산"
+              data={
+                trendData.length
+                  ? trendData
+                  : [{ date: "-", ...Object.fromEntries(memberNames.map((m) => [m, 0])) }]
+              }
+            />
+          </div>
+
+          <CollapsibleSection label={`${monthLabel} 등록 기록 (${records.length}건)`} defaultOpen>
+            <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
+              <p className="mb-3 text-xs text-zinc-500">
+                수량 셀을 클릭해 직접 수정하고 Enter 또는 포커스 이동 시 저장됩니다.
+              </p>
+              <PrivilegeRecordsList records={recordRows} />
+            </div>
+          </CollapsibleSection>
+        </>
       ) : (
         <EmptyState
           title={`${monthLabel} 특전 기록이 없습니다`}
