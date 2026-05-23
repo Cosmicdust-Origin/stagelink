@@ -1,5 +1,4 @@
-import { RateCreateForm } from "@/components/settlement/RateCreateForm";
-import { SettlementRatesList } from "@/components/settlement/SettlementRatesList";
+import { RatesManager } from "@/components/settlement/RatesManager";
 import { SettlementTable } from "@/components/settlement/SettlementTable";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -63,15 +62,12 @@ export default async function SettlementPage({
       </div>
 
       <CollapsibleSection label="멤버별 장당 정산액 설정">
-        <RateCreateForm members={artistMembers ?? []} types={types ?? []} />
+        <RatesManager
+          members={artistMembers ?? []}
+          types={types ?? []}
+          initialRates={rates ?? []}
+        />
       </CollapsibleSection>
-
-      <section className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-        <h2 className="font-semibold text-white">등록된 장당 정산액</h2>
-        <div className="mt-3">
-          <SettlementRatesList rates={rates ?? []} />
-        </div>
-      </section>
 
       {members.length ? (
         <SettlementTable members={members} />
