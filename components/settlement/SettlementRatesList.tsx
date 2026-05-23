@@ -6,8 +6,7 @@ import { useToastStore } from "@/lib/toast";
 
 type Rate = {
   id: string;
-  rate: number;
-  valid_from: string;
+  unit_price: number | null;
   members: { name: string } | { name: string }[] | null;
   privilege_types: { name: string } | { name: string }[] | null;
 };
@@ -19,7 +18,7 @@ export function SettlementRatesList({ rates }: { rates: Rate[] }) {
   async function deleteRate(id: string) {
     const res = await fetch(`/api/settlement/rates/${id}`, { method: "DELETE" });
     if (res.ok) {
-      toast("정산 비율이 삭제되었습니다.");
+      toast("삭제되었습니다.");
       router.refresh();
     } else {
       toast("삭제 실패", "error");
@@ -27,7 +26,7 @@ export function SettlementRatesList({ rates }: { rates: Rate[] }) {
   }
 
   if (rates.length === 0) {
-    return <p className="py-4 text-center text-sm text-zinc-500">등록된 정산 비율이 없습니다.</p>;
+    return <p className="py-4 text-center text-sm text-zinc-500">등록된 장당 정산액이 없습니다.</p>;
   }
 
   return (
@@ -35,6 +34,9 @@ export function SettlementRatesList({ rates }: { rates: Rate[] }) {
       {rates.map((rate) => {
         const member = Array.isArray(rate.members) ? rate.members[0] : rate.members;
         const privilegeType = Array.isArray(rate.privilege_types) ? rate.privilege_types[0] : rate.privilege_types;
+        const priceLabel = rate.unit_price != null
+          ? `${Number(rate.unit_price).toLocaleString()}원/장`
+          : "—";
 
         return (
           <div key={rate.id} className="flex items-center justify-between gap-4 py-2 text-sm">
@@ -42,8 +44,7 @@ export function SettlementRatesList({ rates }: { rates: Rate[] }) {
               {member?.name ?? "멤버"} · {privilegeType?.name ?? "특전"}
             </span>
             <div className="flex items-center gap-3">
-              <span className="tabular-nums text-zinc-300 font-medium">{Number(rate.rate) * 100}%</span>
-              <span className="text-xs text-zinc-600">{rate.valid_from} ~</span>
+              <span className="tabular-nums font-medium text-zinc-300">{priceLabel}</span>
               <button
                 type="button"
                 onClick={() => deleteRate(rate.id)}

@@ -21,8 +21,6 @@ type QueryBuilder = PromiseLike<QueryResult<SettlementRecord | SettlementRate>> 
 type PrivilegeTypeRef = {
   id: string;
   name: string;
-  unit_price: number | string | null;
-  settlement_type?: "rate" | "fixed";
 };
 
 type SettlementRecord = {
@@ -48,8 +46,7 @@ type SettlementRecord = {
 type SettlementRate = {
   member_id: string;
   privilege_type_id: string;
-  rate: number | string | null;
-  fixed_amount: number | string | null;
+  unit_price: number | string | null; // 멤버별 장당 정산액 (절대값)
 };
 
 export async function getSettlementSummary(
@@ -62,7 +59,7 @@ export async function getSettlementSummary(
   let recordQuery = supabase
     .from("privilege_records")
     .select(
-      "id,settled_at,member_id,quantity,privilege_types(id,name,unit_price,settlement_type),members!privilege_records_member_id_fkey(name),events(title,start_at,group_id,workspace_id,groups(name))",
+      "id,settled_at,member_id,quantity,privilege_types(id,name),members!privilege_records_member_id_fkey(name),events(title,start_at,group_id,workspace_id,groups(name))",
     );
 
   if (workspaceId) {
@@ -82,12 +79,10 @@ export async function getSettlementSummary(
     return d >= startDate && d < endDate;
   });
 
+  // 멤버별 장당 정산액 조회 (시간 필터 없음 — 현재 단가 기준)
   let rateQuery = supabase
     .from("settlement_rates")
-    .select("member_id,privilege_type_id,rate,valid_from,valid_until,workspace_id")
-    .lte("valid_from", `${month}-31`)
-    .or(`valid_until.is.null,valid_until.gte.${month}-01`)
-    .order("valid_from", { ascending: false });
+    .select("member_id,privilege_type_id,unit_price");
 
   if (workspaceId) {
     rateQuery = rateQuery.eq("workspace_id", workspaceId);
@@ -107,24 +102,14 @@ export async function getSettlementSummary(
     const event = Array.isArray(record.events) ? record.events[0] : record.events;
     const group = Array.isArray(event?.groups) ? event?.groups[0] : event?.groups;
 
+    // 해당 멤버+특전 유형의 장당 정산액 조회
     const rateEntry = (rates ?? []).find(
       (c) => c.member_id === record.member_id && c.privilege_type_id === privilege?.id,
     );
 
     const qty = Number(record.quantity ?? 0);
-    const settlementType = privilege?.settlement_type ?? "rate";
-    const unitPrice = Number(privilege?.unit_price ?? 0);
-
-    let amount: number;
-    let numericRate: number;
-
-    if (settlementType === "fixed") {
-      amount = qty * unitPrice;
-      numericRate = 1;
-    } else {
-      numericRate = Number(rateEntry?.rate ?? 0);
-      amount = qty * unitPrice * numericRate;
-    }
+    const unitPrice = Number(rateEntry?.unit_price ?? 0);
+    const amount = qty * unitPrice;
 
     if (!grouped.has(record.member_id)) {
       grouped.set(record.member_id, {
@@ -146,7 +131,6 @@ export async function getSettlementSummary(
       event_date: event?.start_at?.slice(0, 10) ?? "-",
       quantity: qty,
       unit_price: unitPrice,
-      rate: numericRate,
       amount,
       settled_at: record.settled_at ?? null,
     });

@@ -66,8 +66,7 @@ export type SettlementLine = {
   event_name: string;
   event_date: string;
   quantity: number;
-  unit_price: number;
-  rate: number;
+  unit_price: number; // 멤버별 장당 정산액 (settlement_rates.unit_price)
   amount: number;
   settled_at: string | null;
 };

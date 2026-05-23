@@ -52,12 +52,11 @@ const s = StyleSheet.create({
   },
 
   colType: { width: "22%" },
-  colEvent: { width: "28%" },
+  colEvent: { width: "30%" },
   colDate: { width: "12%" },
   colQty: { width: "8%", textAlign: "right" },
-  colUnit: { width: "12%", textAlign: "right" },
-  colRate: { width: "8%", textAlign: "right" },
-  colAmount: { width: "10%", textAlign: "right" },
+  colUnit: { width: "14%", textAlign: "right" },
+  colAmount: { width: "14%", textAlign: "right" },
 
   headText: { fontSize: 8, fontWeight: "bold", color: "#444444" },
   cellText: { fontSize: 8, color: "#333333" },
@@ -141,8 +140,7 @@ export function SettlementPDFDocument({
               <Text style={[s.headText, s.colEvent]}>공연명</Text>
               <Text style={[s.headText, s.colDate]}>날짜</Text>
               <Text style={[s.headText, s.colQty]}>수량</Text>
-              <Text style={[s.headText, s.colUnit]}>단가</Text>
-              <Text style={[s.headText, s.colRate]}>비율</Text>
+              <Text style={[s.headText, s.colUnit]}>장당 정산액</Text>
               <Text style={[s.headText, s.colAmount]}>정산액</Text>
             </View>
 
@@ -153,8 +151,7 @@ export function SettlementPDFDocument({
                 <Text style={[s.cellText, s.colEvent]}>{line.event_name}</Text>
                 <Text style={[s.cellMuted, s.colDate]}>{line.event_date}</Text>
                 <Text style={[s.cellText, s.colQty]}>{line.quantity}</Text>
-                <Text style={[s.cellMuted, s.colUnit]}>{fmt(line.unit_price)}</Text>
-                <Text style={[s.cellMuted, s.colRate]}>{Math.round(line.rate * 100)}%</Text>
+                <Text style={[s.cellMuted, s.colUnit]}>{line.unit_price > 0 ? `${fmt(line.unit_price)}원` : "—"}</Text>
                 <Text style={[s.cellText, s.colAmount]}>{fmt(Math.round(line.amount))}</Text>
               </View>
             ))}

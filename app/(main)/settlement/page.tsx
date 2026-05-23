@@ -33,7 +33,7 @@ export default async function SettlementPage({
     wsId
       ? supabase
           .from("privilege_types")
-          .select("id,name,settlement_type")
+          .select("id,name")
           .eq("workspace_id", wsId)
           .eq("is_active", true)
           .order("created_at")
@@ -41,9 +41,9 @@ export default async function SettlementPage({
     wsId
       ? supabase
           .from("settlement_rates")
-          .select("*, members!settlement_rates_member_id_fkey(name), privilege_types(name,settlement_type)")
+          .select("*, members!settlement_rates_member_id_fkey(name), privilege_types(name)")
           .eq("workspace_id", wsId)
-          .order("valid_from", { ascending: false })
+          .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -52,7 +52,7 @@ export default async function SettlementPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-white">정산 관리</h1>
-          <p className="mt-1 text-sm text-zinc-400">{month} 월간 정산 요약과 비율 설정</p>
+          <p className="mt-1 text-sm text-zinc-400">{month} 월간 특전 정산 현황</p>
         </div>
         <a
           className="rounded-md bg-[#E8457A] px-4 py-2 text-sm font-semibold text-white"
@@ -61,18 +61,18 @@ export default async function SettlementPage({
           PDF 내보내기
         </a>
       </div>
-      <CollapsibleSection label="정산 비율 설정 (비율 방식 특전)">
+
+      <CollapsibleSection label="멤버별 장당 정산액 설정">
         <RateCreateForm members={artistMembers ?? []} types={types ?? []} />
       </CollapsibleSection>
+
       <section className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-        <div className="flex items-baseline justify-between">
-          <h2 className="font-semibold text-white">등록된 정산 비율</h2>
-          <p className="text-xs text-zinc-500">금액 방식 특전은 단가 기준 자동 계산됩니다</p>
-        </div>
+        <h2 className="font-semibold text-white">등록된 장당 정산액</h2>
         <div className="mt-3">
           <SettlementRatesList rates={rates ?? []} />
         </div>
       </section>
+
       {members.length ? (
         <SettlementTable members={members} />
       ) : (
