@@ -122,7 +122,7 @@ function TypeRow({
 
       {/* 특전명 인라인 편집 */}
       <input
-        className={`h-7 flex-1 rounded border px-2 text-xs text-white transition-colors ${
+        className={`h-7 w-36 rounded border px-2 text-xs text-white transition-colors ${
           nameDirty ? "border-[#E8457A] bg-[#E8457A]/10" : "border-transparent bg-transparent hover:border-white/10"
         } ${isSaving ? "pointer-events-none" : ""}`}
         value={name}
