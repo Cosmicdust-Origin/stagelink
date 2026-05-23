@@ -60,18 +60,25 @@ export async function getSettlementSummary(
   let recordQuery = supabase
     .from("privilege_records")
     .select(
-      "member_id,quantity,privilege_types(id,name,unit_price,settlement_type),members!privilege_records_member_id_fkey(name),events!inner(title,start_at,group_id,workspace_id,groups(name))",
-    )
-    .gte("events.start_at", start)
-    .lt("events.start_at", end);
+      "member_id,quantity,privilege_types(id,name,unit_price,settlement_type),members!privilege_records_member_id_fkey(name),events(title,start_at,group_id,workspace_id,groups(name))",
+    );
 
   if (workspaceId) {
     recordQuery = recordQuery.eq("events.workspace_id", workspaceId);
   }
 
   const { data: recordRows, error } = await recordQuery;
-  const records = recordRows as SettlementRecord[] | null;
   if (error) throw error;
+
+  // 날짜 필터를 클라이언트에서 처리 (PostgREST 임베디드 필터 불안정 이슈 우회)
+  const startDate = start.slice(0, 10);
+  const endDate = end.slice(0, 10);
+  const records = ((recordRows as SettlementRecord[] | null) ?? []).filter((r) => {
+    const event = Array.isArray(r.events) ? r.events[0] : r.events;
+    if (!event) return false;
+    const d = event.start_at?.slice(0, 10) ?? "";
+    return d >= startDate && d < endDate;
+  });
 
   let rateQuery = supabase
     .from("settlement_rates")

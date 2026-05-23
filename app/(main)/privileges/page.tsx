@@ -1,6 +1,7 @@
 import { MonthFilter } from "@/components/privileges/MonthFilter";
 import { PrivilegeRecordCreateForm, PrivilegeTypeCreateForm } from "@/components/privileges/PrivilegeForms";
 import { PrivilegeRecordsList } from "@/components/privileges/PrivilegeRecordsList";
+import { PrivilegeTypesList, type PrivilegeTypeRow } from "@/components/privileges/PrivilegeTypesList";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { MonthlyBarChart } from "@/components/privileges/MonthlyBarChart";
 import { TrendLineChart } from "@/components/privileges/TrendLineChart";
@@ -54,7 +55,7 @@ export default async function PrivilegesPage({ searchParams }: Props) {
     wsId
       ? supabase
           .from("privilege_types")
-          .select("id,name,unit_price,settlement_type")
+          .select("id,name,category,unit_price,settlement_type")
           .eq("workspace_id", wsId)
           .eq("is_active", true)
           .order("created_at")
@@ -126,6 +127,7 @@ export default async function PrivilegesPage({ searchParams }: Props) {
 
       <CollapsibleSection label="특전 등록" defaultOpen>
         <PrivilegeTypeCreateForm />
+        <PrivilegeTypesList types={(types ?? []) as unknown as PrivilegeTypeRow[]} />
       </CollapsibleSection>
 
       <CollapsibleSection label="수량 등록" defaultOpen>
