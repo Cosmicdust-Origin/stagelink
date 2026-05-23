@@ -42,7 +42,7 @@ export default async function SettlementPage({
           .from("settlement_rates")
           .select("*, members!settlement_rates_member_id_fkey(name), privilege_types(name)")
           .eq("workspace_id", wsId)
-          .order("created_at", { ascending: false })
+          .order("valid_from", { ascending: false })
       : Promise.resolve({ data: [] }),
   ]);
 

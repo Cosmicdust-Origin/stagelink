@@ -11,7 +11,7 @@ export async function GET() {
       .from("settlement_rates")
       .select("*, members!settlement_rates_member_id_fkey(name), privilege_types(name)")
       .eq("workspace_id", wsId)
-      .order("created_at", { ascending: false });
+      .order("valid_from", { ascending: false });
 
     if (error) throw error;
     return json({ rates: data ?? [] });
