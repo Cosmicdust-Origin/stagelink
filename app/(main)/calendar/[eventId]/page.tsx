@@ -24,7 +24,11 @@ export default async function EventDetailPage({ params }: Params) {
     { data: profile },
     { data: groups },
   ] = await Promise.all([
-    supabase.from("events").select("*, groups(name)").eq("id", eventId).single(),
+    supabase
+      .from("events")
+      .select("*, event_groups(group_id, groups(name))")
+      .eq("id", eventId)
+      .single(),
     supabase.from("event_checklists").select("*").eq("event_id", eventId).order("sort_order"),
     supabase.from("timetable_entries").select("id,start_time,end_time,group_id,note,sort_order,groups(name)").eq("event_id", eventId).order("sort_order"),
     supabase.from("privilege_types").select("*").eq("is_active", true).order("created_at"),
@@ -37,11 +41,22 @@ export default async function EventDetailPage({ params }: Params) {
   const canEdit = profile?.role === "admin" || profile?.role === "manager";
   const managerName = event?.on_site_manager as string | null | undefined;
 
+  // event_groups에서 그룹 목록 추출
+  const eventGroupRows = (event?.event_groups ?? []) as Array<{
+    group_id: string;
+    groups: { name: string } | { name: string }[] | null;
+  }>;
+  const linkedGroupIds = eventGroupRows.map((eg) => eg.group_id);
+  const linkedGroupNames = eventGroupRows
+    .map((eg) => (Array.isArray(eg.groups) ? eg.groups[0]?.name : eg.groups?.name))
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <div className="space-y-5">
       <section className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
         <p className="text-sm text-zinc-400">
-          {event?.groups?.name ?? "전체"} · {event?.venue ?? "장소 미정"}
+          {linkedGroupNames || "전체"} · {event?.venue ?? "장소 미정"}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold text-white">{event?.title ?? "이벤트"}</h1>
@@ -59,6 +74,8 @@ export default async function EventDetailPage({ params }: Params) {
             initialVenue={event.venue ?? ""}
             initialMemo={event.memo ?? ""}
             initialOnSiteManager={(event.on_site_manager as string | null) ?? ""}
+            initialGroupIds={linkedGroupIds}
+            groups={groups ?? []}
           />
         ) : null}
       </section>

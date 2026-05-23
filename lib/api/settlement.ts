@@ -23,6 +23,10 @@ type PrivilegeTypeRef = {
   name: string;
 };
 
+type EventGroupRef = {
+  groups: { name: string } | { name: string }[] | null;
+};
+
 type SettlementRecord = {
   id: string;
   settled_at: string | null;
@@ -33,13 +37,13 @@ type SettlementRecord = {
   events: {
     title: string;
     start_at: string;
-    group_id: string | null;
-    groups: { name: string } | Array<{ name: string }> | null;
+    workspace_id: string;
+    event_groups: EventGroupRef[] | null;
   } | Array<{
     title: string;
     start_at: string;
-    group_id: string | null;
-    groups: { name: string } | Array<{ name: string }> | null;
+    workspace_id: string;
+    event_groups: EventGroupRef[] | null;
   }> | null;
 };
 
@@ -59,7 +63,7 @@ export async function getSettlementSummary(
   let recordQuery = supabase
     .from("privilege_records")
     .select(
-      "id,settled_at,member_id,quantity,privilege_types(id,name),members!privilege_records_member_id_fkey(name),events(title,start_at,group_id,workspace_id,groups(name))",
+      "id,settled_at,member_id,quantity,privilege_types(id,name),members!privilege_records_member_id_fkey(name),events(title,start_at,workspace_id,event_groups(groups(name)))",
     );
 
   if (workspaceId) {
@@ -100,7 +104,8 @@ export async function getSettlementSummary(
       : record.privilege_types;
     const profile = Array.isArray(record.members) ? record.members[0] : record.members;
     const event = Array.isArray(record.events) ? record.events[0] : record.events;
-    const group = Array.isArray(event?.groups) ? event?.groups[0] : event?.groups;
+    const firstEg = Array.isArray(event?.event_groups) ? event?.event_groups[0] : event?.event_groups;
+    const group = Array.isArray(firstEg?.groups) ? firstEg?.groups[0] : firstEg?.groups;
 
     // 해당 멤버+특전 유형의 장당 정산액 조회
     const rateEntry = (rates ?? []).find(

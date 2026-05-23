@@ -6,6 +6,7 @@ type EventBody = {
   title: string;
   event_type?: string;
   group_id?: string | null;
+  group_ids?: string[];       // 다중 그룹 (event_groups 테이블)
   venue?: string;
   start_at: string;
   end_at: string;
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     if (!wsId) return json({ error: "워크스페이스 없음" }, 400);
 
     const body = await parseJson<EventBody>(request);
-    const { checklist_template_ids: checklistTemplateIds, ...eventPayload } = body;
+    const { checklist_template_ids: checklistTemplateIds, group_ids: groupIds, ...eventPayload } = body;
 
     const { data: event, error } = await supabase
       .from("events")
@@ -59,6 +60,14 @@ export async function POST(request: Request) {
       .select("*")
       .single();
     if (error) throw error;
+
+    // event_groups 에 다중 그룹 연결
+    if (groupIds && groupIds.length > 0) {
+      const { error: egErr } = await supabase
+        .from("event_groups")
+        .insert(groupIds.map((gid) => ({ event_id: event.id, group_id: gid })));
+      if (egErr) throw egErr;
+    }
 
     if (checklistTemplateIds?.length) {
       const { data: templates, error: templateError } = await supabase
