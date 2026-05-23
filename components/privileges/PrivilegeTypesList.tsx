@@ -65,7 +65,7 @@ export function PrivilegeTypesList({ types }: { types: PrivilegeTypeRow[] }) {
   if (types.length === 0) return null;
 
   return (
-    <div className="mt-3 divide-y divide-white/5">
+    <div className="mt-3 divide-y divide-white/5 pl-4">
       {types.map((t) => (
         <TypeRow
           key={t.id}
