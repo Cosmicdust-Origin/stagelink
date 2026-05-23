@@ -33,7 +33,7 @@ export default async function SettlementPage({
     wsId
       ? supabase
           .from("privilege_types")
-          .select("id,name")
+          .select("id,name,settlement_type")
           .eq("workspace_id", wsId)
           .eq("is_active", true)
           .order("created_at")
@@ -41,7 +41,7 @@ export default async function SettlementPage({
     wsId
       ? supabase
           .from("settlement_rates")
-          .select("*, members!settlement_rates_member_id_fkey(name), privilege_types(name)")
+          .select("*, members!settlement_rates_member_id_fkey(name), privilege_types(name,settlement_type)")
           .eq("workspace_id", wsId)
           .order("valid_from", { ascending: false })
       : Promise.resolve({ data: [] }),

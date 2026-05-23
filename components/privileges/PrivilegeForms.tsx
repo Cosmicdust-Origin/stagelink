@@ -13,6 +13,7 @@ export function PrivilegeTypeCreateForm() {
   const toast = useToastStore((s) => s.show);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("on_site");
+  const [settlementType, setSettlementType] = useState("rate");
   const [unitPrice, setUnitPrice] = useState("");
 
   async function createType(event: React.FormEvent<HTMLFormElement>) {
@@ -21,7 +22,12 @@ export function PrivilegeTypeCreateForm() {
       const response = await fetch("/api/privileges/types", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, category, unit_price: unitPrice ? Number(unitPrice) : null }),
+        body: JSON.stringify({
+          name,
+          category,
+          settlement_type: settlementType,
+          unit_price: settlementType === "rate" && unitPrice ? Number(unitPrice) : null,
+        }),
       });
       if (response.ok) {
         setName("");
@@ -39,17 +45,45 @@ export function PrivilegeTypeCreateForm() {
 
   return (
     <form className="rounded-lg border border-white/10 bg-white/[0.04] p-4" onSubmit={createType}>
-      <div className="grid gap-3 md:grid-cols-[1fr_160px_160px_auto]">
-        <input className="h-10 rounded-md border border-white/10 bg-[#101114] px-3 text-white" placeholder="특전명" value={name} onChange={(event) => setName(event.target.value)} required />
-        <select className="h-10 rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={category} onChange={(event) => setCategory(event.target.value)}>
+      <div className="flex flex-wrap gap-3">
+        <input
+          className="h-10 min-w-[150px] flex-1 rounded-md border border-white/10 bg-[#101114] px-3 text-white"
+          placeholder="특전명"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+        <select
+          className="h-10 w-[150px] rounded-md border border-white/10 bg-[#101114] px-3 text-white"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
           <option value="on_site">현장</option>
           <option value="event">이벤트</option>
           <option value="mail_order">통판</option>
           <option value="goods">굿즈</option>
           <option value="other">기타</option>
         </select>
-        <input className="h-10 rounded-md border border-white/10 bg-[#101114] px-3 text-white" type="number" placeholder="단가" value={unitPrice} onChange={(event) => setUnitPrice(event.target.value)} />
-        <button className="flex h-10 items-center justify-center gap-2 rounded-md bg-[#E8457A] px-4 text-sm font-semibold text-white" type="submit">
+        <select
+          className="h-10 w-[150px] rounded-md border border-white/10 bg-[#101114] px-3 text-white"
+          value={settlementType}
+          onChange={(e) => setSettlementType(e.target.value)}
+        >
+          <option value="rate">비율 방식</option>
+          <option value="fixed">금액 방식</option>
+        </select>
+        <input
+          className="h-10 w-[140px] rounded-md border border-white/10 bg-[#101114] px-3 text-white"
+          type="number"
+          min="0"
+          placeholder={settlementType === "fixed" ? "금액 (원/장)" : "단가 (원)"}
+          value={unitPrice}
+          onChange={(e) => setUnitPrice(e.target.value)}
+        />
+        <button
+          className="flex h-10 items-center justify-center gap-2 rounded-md bg-[#E8457A] px-4 text-sm font-semibold text-white"
+          type="submit"
+        >
           <Plus className="h-4 w-4" />
           특전 등록
         </button>

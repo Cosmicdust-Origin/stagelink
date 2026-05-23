@@ -54,7 +54,7 @@ export default async function PrivilegesPage({ searchParams }: Props) {
     wsId
       ? supabase
           .from("privilege_types")
-          .select("id,name,unit_price")
+          .select("id,name,unit_price,settlement_type")
           .eq("workspace_id", wsId)
           .eq("is_active", true)
           .order("created_at")

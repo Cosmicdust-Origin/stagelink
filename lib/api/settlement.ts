@@ -18,18 +18,36 @@ type QueryBuilder = PromiseLike<QueryResult<SettlementRecord | SettlementRate>> 
   order: (column: string, options?: { ascending?: boolean }) => QueryBuilder;
 };
 
+type PrivilegeTypeRef = {
+  id: string;
+  name: string;
+  unit_price: number | string | null;
+  settlement_type?: "rate" | "fixed";
+};
+
 type SettlementRecord = {
   member_id: string;
   quantity: number;
-  privilege_types: { id: string; name: string; unit_price: number | string | null } | Array<{ id: string; name: string; unit_price: number | string | null }> | null;
+  privilege_types: PrivilegeTypeRef | PrivilegeTypeRef[] | null;
   members: { name: string } | Array<{ name: string }> | null;
-  events: { title: string; start_at: string; group_id: string | null; groups: { name: string } | Array<{ name: string }> | null } | Array<{ title: string; start_at: string; group_id: string | null; groups: { name: string } | Array<{ name: string }> | null }> | null;
+  events: {
+    title: string;
+    start_at: string;
+    group_id: string | null;
+    groups: { name: string } | Array<{ name: string }> | null;
+  } | Array<{
+    title: string;
+    start_at: string;
+    group_id: string | null;
+    groups: { name: string } | Array<{ name: string }> | null;
+  }> | null;
 };
 
 type SettlementRate = {
   member_id: string;
   privilege_type_id: string;
-  rate: number | string;
+  rate: number | string | null;
+  fixed_amount: number | string | null;
 };
 
 export async function getSettlementSummary(
@@ -42,7 +60,7 @@ export async function getSettlementSummary(
   let recordQuery = supabase
     .from("privilege_records")
     .select(
-      "member_id,quantity,privilege_types(id,name,unit_price),members!privilege_records_member_id_fkey(name),events!inner(title,start_at,group_id,workspace_id,groups(name))",
+      "member_id,quantity,privilege_types(id,name,unit_price,settlement_type),members!privilege_records_member_id_fkey(name),events!inner(title,start_at,group_id,workspace_id,groups(name))",
     )
     .gte("events.start_at", start)
     .lt("events.start_at", end);
@@ -57,7 +75,7 @@ export async function getSettlementSummary(
 
   let rateQuery = supabase
     .from("settlement_rates")
-    .select("member_id,privilege_type_id,rate,valid_from,valid_until,workspace_id")
+    .select("member_id,privilege_type_id,rate,fixed_amount,valid_from,valid_until,workspace_id")
     .lte("valid_from", `${month}-31`)
     .or(`valid_until.is.null,valid_until.gte.${month}-01`)
     .order("valid_from", { ascending: false });
@@ -79,15 +97,29 @@ export async function getSettlementSummary(
     const profile = Array.isArray(record.members) ? record.members[0] : record.members;
     const event = Array.isArray(record.events) ? record.events[0] : record.events;
     const group = Array.isArray(event?.groups) ? event?.groups[0] : event?.groups;
-    const rate = (rates ?? []).find(
+
+    const rateEntry = (rates ?? []).find(
       (candidate) =>
         candidate.member_id === record.member_id &&
         candidate.privilege_type_id === privilege?.id,
-    )?.rate;
+    );
 
+    const qty = Number(record.quantity ?? 0);
+    const settlementType = privilege?.settlement_type ?? "rate";
     const unitPrice = Number(privilege?.unit_price ?? 0);
-    const numericRate = Number(rate ?? 0);
-    const amount = Number(record.quantity ?? 0) * unitPrice * numericRate;
+
+    let amount: number;
+    let numericRate: number;
+
+    if (settlementType === "fixed") {
+      // 금액 방식: 단가가 곧 정산 금액, 비율 불필요
+      amount = qty * unitPrice;
+      numericRate = 1;
+    } else {
+      // 비율 방식: 수량 × 단가 × 비율
+      numericRate = Number(rateEntry?.rate ?? 0);
+      amount = qty * unitPrice * numericRate;
+    }
 
     if (!grouped.has(record.member_id)) {
       grouped.set(record.member_id, {
@@ -104,7 +136,7 @@ export async function getSettlementSummary(
       privilege_type: privilege?.name ?? "Unknown",
       event_name: event?.title ?? "-",
       event_date: event?.start_at?.slice(0, 10) ?? "-",
-      quantity: Number(record.quantity ?? 0),
+      quantity: qty,
       unit_price: unitPrice,
       rate: numericRate,
       amount,

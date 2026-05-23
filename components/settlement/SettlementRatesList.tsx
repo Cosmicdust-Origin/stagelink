@@ -19,7 +19,7 @@ export function SettlementRatesList({ rates }: { rates: Rate[] }) {
   async function deleteRate(id: string) {
     const res = await fetch(`/api/settlement/rates/${id}`, { method: "DELETE" });
     if (res.ok) {
-      toast("비율 삭제 완료");
+      toast("정산 비율이 삭제되었습니다.");
       router.refresh();
     } else {
       toast("삭제 실패", "error");
@@ -33,16 +33,16 @@ export function SettlementRatesList({ rates }: { rates: Rate[] }) {
   return (
     <div className="divide-y divide-white/10">
       {rates.map((rate) => {
-        const profile = Array.isArray(rate.members) ? rate.members[0] : rate.members;
+        const member = Array.isArray(rate.members) ? rate.members[0] : rate.members;
         const privilegeType = Array.isArray(rate.privilege_types) ? rate.privilege_types[0] : rate.privilege_types;
 
         return (
           <div key={rate.id} className="flex items-center justify-between gap-4 py-2 text-sm">
             <span className="text-zinc-200">
-              {profile?.name ?? "멤버"} · {privilegeType?.name ?? "특전"}
+              {member?.name ?? "멤버"} · {privilegeType?.name ?? "특전"}
             </span>
             <div className="flex items-center gap-3">
-              <span className="tabular-nums text-zinc-400">{Number(rate.rate) * 100}%</span>
+              <span className="tabular-nums text-zinc-300 font-medium">{Number(rate.rate) * 100}%</span>
               <span className="text-xs text-zinc-600">{rate.valid_from} ~</span>
               <button
                 type="button"

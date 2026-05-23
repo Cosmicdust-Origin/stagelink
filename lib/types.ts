@@ -41,11 +41,14 @@ export type EventSummary = {
   end_at: string;
 };
 
+export type SettlementType = "rate" | "fixed";
+
 export type PrivilegeType = {
   id: string;
   name: string;
   category: PrivilegeCategory;
   unit_price: number | null;
+  settlement_type: SettlementType;
   is_active: boolean;
 };
 
