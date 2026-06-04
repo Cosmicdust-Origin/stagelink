@@ -1,6 +1,5 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useToastStore } from "@/lib/toast";
@@ -72,6 +71,8 @@ export function PrivilegeRecordsList({ records }: { records: PrivilegeRecordRow[
   }
 
   async function deleteRecord(id: string) {
+    if (!window.confirm("이 특전 수량 기록을 삭제할까요?")) return;
+
     try {
       const res = await fetch(`/api/privileges/records/${id}`, { method: "DELETE" });
       if (res.ok) {
@@ -108,7 +109,7 @@ export function PrivilegeRecordsList({ records }: { records: PrivilegeRecordRow[
                   <th className="px-3 py-2 font-medium">멤버</th>
                   <th className="px-3 py-2 font-medium">특전</th>
                   <th className="px-3 py-2 font-medium">수량</th>
-                  <th className="px-3 py-2 font-medium"></th>
+                  <th className="px-3 py-2 text-right font-medium">관리</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -179,14 +180,13 @@ function QuantityRow({
           }}
         />
       </td>
-      <td className="px-3 py-2">
+      <td className="px-3 py-2 text-right">
         <button
           type="button"
           onClick={onDelete}
-          className="rounded p-1 text-zinc-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400"
-          aria-label="삭제"
+          className="h-8 rounded-md border border-white/10 px-3 text-xs font-medium text-zinc-400 transition-colors hover:border-red-400/40 hover:bg-red-500/10 hover:text-red-300"
         >
-          <Trash2 className="h-4 w-4" />
+          삭제
         </button>
       </td>
     </tr>
