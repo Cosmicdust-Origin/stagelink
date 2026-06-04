@@ -11,7 +11,7 @@ export default async function CalendarPage() {
 
   const wsId = user ? await getWorkspaceId(supabase, user.id) : null;
 
-  const [{ data: events }, { data: groups }, { data: profiles }, { data: profile }] =
+  const [{ data: events }, { data: groups }, { data: profile }] =
     await Promise.all([
       wsId
         ? supabase
@@ -22,9 +22,6 @@ export default async function CalendarPage() {
         : Promise.resolve({ data: [] }),
       wsId
         ? supabase.from("groups").select("id,name").eq("workspace_id", wsId).order("name")
-        : Promise.resolve({ data: [] }),
-      wsId
-        ? supabase.from("profiles").select("id,name,role").order("name")
         : Promise.resolve({ data: [] }),
       user
         ? supabase.from("profiles").select("role").eq("id", user.id).single()
@@ -41,7 +38,7 @@ export default async function CalendarPage() {
         </p>
       </div>
       {canEdit ? (
-        <EventCreateForm groups={groups ?? []} managers={profiles ?? []} />
+        <EventCreateForm groups={groups ?? []} />
       ) : null}
       <CalendarView events={events ?? []} />
     </div>

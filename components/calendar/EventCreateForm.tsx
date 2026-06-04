@@ -8,7 +8,7 @@ import type { EventType } from "@/lib/types";
 
 type Option = { id: string; name: string };
 
-export function EventCreateForm({ groups, managers }: { groups: Option[]; managers: Option[] }) {
+export function EventCreateForm({ groups }: { groups: Option[] }) {
   const router = useRouter();
   const toast = useToastStore((s) => s.show);
   const [title, setTitle] = useState("");
@@ -17,7 +17,7 @@ export function EventCreateForm({ groups, managers }: { groups: Option[]; manage
   const [venue, setVenue] = useState("");
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
-  const [managerId, setManagerId] = useState("");
+  const [onSiteManager, setOnSiteManager] = useState("");
   const [memo, setMemo] = useState("");
 
   function toggleGroup(id: string) {
@@ -38,7 +38,7 @@ export function EventCreateForm({ groups, managers }: { groups: Option[]; manage
         venue: venue || null,
         start_at: new Date(startAt).toISOString(),
         end_at: new Date(endAt || startAt).toISOString(),
-        manager_id: managerId || null,
+        on_site_manager: onSiteManager || null,
         memo: memo || null,
       }),
     });
@@ -52,6 +52,7 @@ export function EventCreateForm({ groups, managers }: { groups: Option[]; manage
     setVenue("");
     setStartAt("");
     setEndAt("");
+    setOnSiteManager("");
     setMemo("");
     setGroupIds([]);
     toast("일정 등록 완료!");
@@ -121,16 +122,12 @@ export function EventCreateForm({ groups, managers }: { groups: Option[]; manage
         </label>
         <label className="block min-w-0 text-sm text-zinc-300">
           현장 담당자
-          <select
-            className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white"
-            value={managerId}
-            onChange={(e) => setManagerId(e.target.value)}
-          >
-            <option value="">미지정</option>
-            {managers.map((m) => (
-              <option key={m.id} value={m.id}>{m.name}</option>
-            ))}
-          </select>
+          <input
+            className="mt-2 h-10 w-full min-w-0 rounded-md border border-white/10 bg-[#101114] px-3 text-white"
+            value={onSiteManager}
+            onChange={(e) => setOnSiteManager(e.target.value)}
+            placeholder="예: 김현장, 외부 스태프"
+          />
         </label>
       </div>
 

@@ -11,6 +11,7 @@ type EventBody = {
   start_at: string;
   end_at: string;
   manager_id?: string | null;
+  on_site_manager?: string | null;
   memo?: string;
   checklist_template_ids?: string[];
 };
