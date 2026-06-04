@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useToastStore } from "@/lib/toast";
@@ -26,6 +27,7 @@ export function PrivilegeRecordsList({ records }: { records: PrivilegeRecordRow[
   const router = useRouter();
   const toast = useToastStore((s) => s.show);
   const [saving, setSaving] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
 
   const eventGroups = useMemo(() => {
     const grouped = new Map<string, EventGroup>();
@@ -86,54 +88,82 @@ export function PrivilegeRecordsList({ records }: { records: PrivilegeRecordRow[
     }
   }
 
+  function toggleEventGroup(id: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
   if (records.length === 0) {
     return <p className="py-6 text-center text-sm text-zinc-500">필터에 해당하는 수량 기록이 없습니다.</p>;
   }
 
   return (
     <div className="space-y-4">
-      {eventGroups.map((eventGroup) => (
-        <section key={eventGroup.id} className="overflow-hidden rounded-md border border-white/10">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-white/[0.035] px-3 py-2">
-            <div>
-              <p className="font-semibold text-white">{eventGroup.title}</p>
-              <p className="mt-0.5 text-xs text-zinc-500">{eventGroup.date}</p>
-            </div>
-            <p className="text-xs text-zinc-400">{eventGroup.rows.length}건</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/10 text-left text-xs text-zinc-500">
-                  <th className="px-3 py-2 font-medium">그룹</th>
-                  <th className="px-3 py-2 font-medium">멤버</th>
-                  <th className="px-3 py-2 font-medium">특전</th>
-                  <th className="px-3 py-2 font-medium">수량</th>
-                  <th className="px-3 py-2 text-right font-medium">관리</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {eventGroup.rows
-                  .slice()
-                  .sort((a, b) => {
-                    const groupOrder = a.group_name.localeCompare(b.group_name, "ko");
-                    if (groupOrder !== 0) return groupOrder;
-                    return a.member_name.localeCompare(b.member_name, "ko");
-                  })
-                  .map((row) => (
-                    <QuantityRow
-                      key={row.id}
-                      row={row}
-                      isSaving={saving === row.id}
-                      onSave={(qty) => updateQuantity(row.id, qty)}
-                      onDelete={() => deleteRecord(row.id)}
-                    />
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ))}
+      {eventGroups.map((eventGroup) => {
+        const isCollapsed = collapsed.has(eventGroup.id);
+
+        return (
+          <section key={eventGroup.id} className="overflow-hidden rounded-md border border-white/10">
+            <button
+              type="button"
+              aria-expanded={!isCollapsed}
+              onClick={() => toggleEventGroup(eventGroup.id)}
+              className={`flex w-full flex-wrap items-center justify-between gap-2 bg-white/[0.035] px-3 py-2 text-left transition-colors hover:bg-white/[0.055] ${
+                isCollapsed ? "" : "border-b border-white/10"
+              }`}
+            >
+              <span>
+                <span className="block font-semibold text-white">{eventGroup.title}</span>
+                <span className="mt-0.5 block text-xs text-zinc-500">{eventGroup.date}</span>
+              </span>
+              <span className="flex items-center gap-2 text-xs text-zinc-400">
+                {eventGroup.rows.length}건
+                {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+              </span>
+            </button>
+            {!isCollapsed ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10 text-left text-xs text-zinc-500">
+                      <th className="px-3 py-2 font-medium">그룹</th>
+                      <th className="px-3 py-2 font-medium">멤버</th>
+                      <th className="px-3 py-2 font-medium">특전</th>
+                      <th className="px-3 py-2 font-medium">수량</th>
+                      <th className="px-3 py-2 text-right font-medium">관리</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {eventGroup.rows
+                      .slice()
+                      .sort((a, b) => {
+                        const groupOrder = a.group_name.localeCompare(b.group_name, "ko");
+                        if (groupOrder !== 0) return groupOrder;
+                        return a.member_name.localeCompare(b.member_name, "ko");
+                      })
+                      .map((row) => (
+                        <QuantityRow
+                          key={row.id}
+                          row={row}
+                          isSaving={saving === row.id}
+                          onSave={(qty) => updateQuantity(row.id, qty)}
+                          onDelete={() => deleteRecord(row.id)}
+                        />
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+          </section>
+        );
+      })}
     </div>
   );
 }
