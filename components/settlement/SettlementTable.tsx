@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
@@ -28,19 +28,20 @@ export function SettlementTable({ members }: { members: SettlementMemberSummary[
           </tr>
         </thead>
         <tbody className="divide-y divide-white/10">
-          {members.map((member) => (
-            <>
-              <MemberRow
-                key={member.member_id}
-                member={member}
-                isExpanded={expanded === member.member_id}
-                onToggle={() => toggle(member.member_id)}
-              />
-              {expanded === member.member_id && (
-                <DetailRow key={`detail-${member.member_id}`} member={member} />
-              )}
-            </>
-          ))}
+          {members.map((member) => {
+            const rowId = `${member.member_id}:${member.group_id ?? "none"}`;
+
+            return (
+              <Fragment key={rowId}>
+                <MemberRow
+                  member={member}
+                  isExpanded={expanded === rowId}
+                  onToggle={() => toggle(rowId)}
+                />
+                {expanded === rowId && <DetailRow member={member} />}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>

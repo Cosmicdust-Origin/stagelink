@@ -1,5 +1,6 @@
 import { RatesManager } from "@/components/settlement/RatesManager";
 import { SettlementTable } from "@/components/settlement/SettlementTable";
+import { MonthFilter } from "@/components/privileges/MonthFilter";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getSettlementSummary } from "@/lib/api/settlement";
@@ -53,12 +54,15 @@ export default async function SettlementPage({
           <h1 className="text-2xl font-semibold text-white">정산 관리</h1>
           <p className="mt-1 text-sm text-zinc-400">{month} 월간 특전 정산 현황</p>
         </div>
-        <a
-          className="rounded-md bg-[#E8457A] px-4 py-2 text-sm font-semibold text-white"
-          href={`/api/settlement/export/${month}`}
-        >
-          PDF 내보내기
-        </a>
+        <div className="flex flex-wrap items-center gap-3">
+          <MonthFilter value={month} basePath="/settlement" label="정산 월" />
+          <a
+            className="rounded-md bg-[#E8457A] px-4 py-2 text-sm font-semibold text-white"
+            href={`/api/settlement/export/${month}`}
+          >
+            PDF 내보내기
+          </a>
+        </div>
       </div>
 
       <CollapsibleSection label="멤버별 장당 정산액 설정">

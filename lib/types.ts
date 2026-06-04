@@ -73,6 +73,7 @@ export type SettlementLine = {
 
 export type SettlementMemberSummary = {
   member_id: string;
+  group_id: string | null;
   member_name: string;
   group_name: string;
   breakdown: SettlementLine[];
