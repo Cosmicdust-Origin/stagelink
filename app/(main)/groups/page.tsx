@@ -2,6 +2,7 @@ import Link from "next/link";
 import { GroupCreateForm } from "@/components/groups/GroupCreateForm";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { canOperate } from "@/lib/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 
@@ -25,7 +26,7 @@ export default async function GroupsPage() {
       ? supabase.from("profiles").select("role").eq("id", user.id).single()
       : Promise.resolve({ data: null }),
   ]);
-  const canEdit = profile?.role === "admin";
+  const canEdit = canOperate(profile?.role);
 
   return (
     <div className="space-y-4">

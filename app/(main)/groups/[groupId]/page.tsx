@@ -2,6 +2,7 @@ import Link from "next/link";
 import { GroupActions } from "@/components/groups/GroupActions";
 import { MemberManager } from "@/components/groups/MemberManager";
 import { MonthlyBarChart } from "@/components/privileges/MonthlyBarChart";
+import { canOperate } from "@/lib/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type Params = { params: Promise<{ groupId: string }> };
@@ -18,7 +19,7 @@ export default async function GroupDetailPage({ params }: Params) {
     supabase.from("events").select("*").eq("group_id", groupId).order("start_at", { ascending: false }).limit(5),
     user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
   ]);
-  const canEdit = profile?.role === "admin" || profile?.role === "manager";
+  const canEdit = canOperate(profile?.role);
 
   // Current month range
   const now = new Date();

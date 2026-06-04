@@ -5,7 +5,7 @@ type Params = { params: Promise<{ rateId: string }> };
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { rateId } = await params;
-    const { supabase } = await requireRole(["admin"]);
+    const { supabase } = await requireRole(["admin", "owner"]);
     const { error } = await supabase.from("settlement_rates").delete().eq("id", rateId);
     if (error) throw error;
     return json({ success: true });
@@ -17,7 +17,7 @@ export async function DELETE(_: Request, { params }: Params) {
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { rateId } = await params;
-    const { supabase } = await requireRole(["admin"]);
+    const { supabase } = await requireRole(["admin", "owner"]);
     const body = await parseJson<Record<string, unknown>>(request);
     const { data, error } = await supabase
       .from("settlement_rates")

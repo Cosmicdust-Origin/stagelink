@@ -4,7 +4,7 @@ import { getWorkspaceId } from "@/lib/workspace";
 
 type InviteBody = {
   email: string;
-  role: "manager" | "member";
+  role: "owner" | "staff";
   name?: string;
 };
 

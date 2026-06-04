@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { canAccessMembers, canAccessSettlement } from "@/lib/rbac";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -56,15 +57,18 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // /members 는 admin 전용
-  if (user && pathname.startsWith("/members")) {
+  if (user && (pathname.startsWith("/members") || pathname.startsWith("/settlement"))) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
 
-    if (profile?.role !== "admin") {
+    const denied =
+      (pathname.startsWith("/members") && !canAccessMembers(profile?.role)) ||
+      (pathname.startsWith("/settlement") && !canAccessSettlement(profile?.role));
+
+    if (denied) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/dashboard";
       return NextResponse.redirect(redirectUrl);

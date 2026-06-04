@@ -1,5 +1,6 @@
 import { ChecklistTemplateForm, InviteUserForm } from "@/components/settings/SettingsForms";
 import { PrivilegeTypeManager } from "@/components/settings/PrivilegeTypeManager";
+import { canAccessMembers, normalizeRole, roleLabels } from "@/lib/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 
@@ -10,6 +11,10 @@ export default async function SettingsPage() {
   } = await supabase.auth.getUser();
 
   const wsId = user ? await getWorkspaceId(supabase, user.id) : null;
+  const { data: currentProfile } = user
+    ? await supabase.from("profiles").select("role").eq("id", user.id).single()
+    : { data: null };
+  const canManageAccounts = canAccessMembers(currentProfile?.role);
 
   // Workspace-scoped user IDs
   const memberIds: string[] = [];
@@ -50,12 +55,21 @@ export default async function SettingsPage() {
     <div className="space-y-5">
       <h1 className="text-2xl font-semibold text-white">설정</h1>
       <section className="grid gap-4 xl:grid-cols-2">
-        <Panel title="계정 초대">
-          <InviteUserForm />
-          {profiles?.map((profile) => (
-            <Row key={profile.id} label={profile.name} value={profile.role} />
-          ))}
-        </Panel>
+        {canManageAccounts ? (
+          <Panel title="계정 초대">
+            <InviteUserForm />
+            {profiles?.map((profile) => {
+              const role = normalizeRole(profile.role);
+              return (
+                <Row
+                  key={profile.id}
+                  label={profile.name}
+                  value={role ? roleLabels[role] : profile.role}
+                />
+              );
+            })}
+          </Panel>
+        ) : null}
         <Panel title="특전 항목 관리">
           <PrivilegeTypeManager types={privilegeTypes ?? []} />
         </Panel>

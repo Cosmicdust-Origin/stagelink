@@ -1,5 +1,6 @@
 import { EventCreateForm } from "@/components/calendar/EventCreateForm";
 import { CalendarView } from "@/components/calendar/CalendarView";
+import { canOperate } from "@/lib/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 
@@ -27,7 +28,7 @@ export default async function CalendarPage() {
         ? supabase.from("profiles").select("role").eq("id", user.id).single()
         : Promise.resolve({ data: null }),
     ]);
-  const canEdit = profile?.role === "admin" || profile?.role === "manager";
+  const canEdit = canOperate(profile?.role);
 
   return (
     <div className="space-y-4">

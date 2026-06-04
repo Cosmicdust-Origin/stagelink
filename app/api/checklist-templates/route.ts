@@ -22,7 +22,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { supabase, user } = await requireRole(["admin"]);
+    const { supabase, user } = await requireRole(["admin", "manager"]);
     const wsId = await getWorkspaceId(supabase, user.id);
     if (!wsId) return json({ error: "워크스페이스 없음" }, 400);
 

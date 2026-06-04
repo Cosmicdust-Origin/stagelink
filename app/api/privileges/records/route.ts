@@ -4,7 +4,7 @@ import { getWorkspaceId } from "@/lib/workspace";
 
 export async function GET(request: Request) {
   try {
-    const { supabase, user, profile } = await requireUser();
+    const { supabase, user } = await requireUser();
     const wsId = await getWorkspaceId(supabase, user.id);
     if (!wsId) return json({ records: [], total_by_type: {} });
 

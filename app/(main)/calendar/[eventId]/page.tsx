@@ -2,6 +2,7 @@ import { ChecklistPanel } from "@/components/calendar/ChecklistPanel";
 import { EventActions } from "@/components/calendar/EventActions";
 import { PrivilegeInputTable } from "@/components/calendar/PrivilegeInputTable";
 import { TimetablePanel } from "@/components/calendar/TimetablePanel";
+import { canOperate } from "@/lib/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 
@@ -38,7 +39,7 @@ export default async function EventDetailPage({ params }: Params) {
     supabase.from("groups").select("id,name").order("name"),
   ]);
 
-  const canEdit = profile?.role === "admin" || profile?.role === "manager";
+  const canEdit = canOperate(profile?.role);
   const managerName = event?.on_site_manager as string | null | undefined;
 
   // event_groups에서 그룹 목록 추출

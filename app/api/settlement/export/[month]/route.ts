@@ -9,7 +9,7 @@ type Params = { params: Promise<{ month: string }> };
 
 export async function GET(_: Request, { params }: Params) {
   const { month } = await params;
-  const { supabase, user } = await requireRole(["admin"]);
+  const { supabase, user } = await requireRole(["admin", "owner"]);
   const wsId = await getWorkspaceId(supabase, user.id);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

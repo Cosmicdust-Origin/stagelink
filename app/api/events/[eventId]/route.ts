@@ -66,7 +66,7 @@ export async function PUT(request: Request, { params }: Params) {
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { eventId } = await params;
-    const { supabase } = await requireRole(["admin"]);
+    const { supabase } = await requireRole(["admin", "manager"]);
     const { error } = await supabase.from("events").delete().eq("id", eventId);
 
     if (error) throw error;

@@ -17,6 +17,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { navItems } from "@/lib/constants";
+import { canAccessNav } from "@/lib/rbac";
 import { createClient } from "@/lib/supabase/client";
 import type { UserRole } from "@/lib/types";
 
@@ -52,7 +53,7 @@ export function Sidebar({ role }: { role?: UserRole }) {
       </Link>
       <nav className="mt-8 flex-1 space-y-1">
         {navItems
-          .filter((item) => !item.adminOnly || role === "admin")
+          .filter((item) => canAccessNav(item.access, role))
           .map((item) => {
             const Icon = icons[item.href];
             const active = pathname === item.href || pathname.startsWith(item.href + "/");

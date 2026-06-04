@@ -4,6 +4,7 @@ import { LogOut, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { normalizeRole, roleLabels } from "@/lib/rbac";
 import { useToastStore } from "@/lib/toast";
 
 type Profile = {
@@ -13,12 +14,6 @@ type Profile = {
   role: string;
   phone: string | null;
   joined_at: string | null;
-};
-
-const roleLabel: Record<string, string> = {
-  admin: "관리자",
-  manager: "매니저",
-  member: "멤버",
 };
 
 export function AccountForm({ profile }: { profile: Profile }) {
@@ -36,6 +31,7 @@ export function AccountForm({ profile }: { profile: Profile }) {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const normalizedRole = normalizeRole(profile.role);
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -145,7 +141,7 @@ export function AccountForm({ profile }: { profile: Profile }) {
           <div className="text-sm text-zinc-300">
             역할
             <p className="mt-2 flex h-10 items-center rounded-md border border-white/10 bg-white/[0.02] px-3 text-zinc-500">
-              {roleLabel[profile.role] ?? profile.role}
+              {normalizedRole ? roleLabels[normalizedRole] : profile.role}
               {profile.joined_at ? (
                 <span className="ml-auto text-xs text-zinc-600">
                   {profile.joined_at.slice(0, 10)} 입사

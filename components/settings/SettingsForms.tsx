@@ -9,7 +9,7 @@ export function InviteUserForm() {
   const toast = useToastStore((s) => s.show);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState<"manager" | "member">("member");
+  const [role, setRole] = useState<"owner" | "staff">("staff");
 
   async function invite(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -31,9 +31,9 @@ export function InviteUserForm() {
     <form className="space-y-3" onSubmit={invite}>
       <input className="h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" type="email" placeholder="email@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required />
       <input className="h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" placeholder="이름" value={name} onChange={(event) => setName(event.target.value)} />
-      <select className="h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={role} onChange={(event) => setRole(event.target.value as "manager" | "member")}>
-        <option value="member">member</option>
-        <option value="manager">manager</option>
+      <select className="h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white" value={role} onChange={(event) => setRole(event.target.value as "owner" | "staff")}>
+        <option value="staff">직원</option>
+        <option value="owner">대표</option>
       </select>
       <button className="flex h-10 items-center gap-2 rounded-md bg-[#E8457A] px-4 text-sm font-semibold text-white" type="submit">
         <Send className="h-4 w-4" />

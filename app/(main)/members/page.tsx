@@ -1,17 +1,8 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { roleBadgeClasses, roleLabels, normalizeRole } from "@/lib/rbac";
 import { ShieldCheck, UserCog } from "lucide-react";
-
-const roleLabel: Record<string, string> = {
-  admin: "관리자",
-  manager: "매니저",
-};
-
-const roleBadgeClass: Record<string, string> = {
-  admin: "bg-[#E8457A]/15 text-[#E8457A]",
-  manager: "bg-blue-500/15 text-blue-300",
-};
 
 type Props = { searchParams: Promise<{ page?: string }> };
 
@@ -20,8 +11,6 @@ const PAGE_SIZE = 20;
 export default async function MembersPage({ searchParams }: Props) {
   const { page: pageStr } = await searchParams;
   const page = Math.max(1, Number(pageStr ?? "1"));
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
 
   const supabase = await createServerSupabaseClient();
   const {
@@ -92,6 +81,7 @@ export default async function MembersPage({ searchParams }: Props) {
               const profile = profileMap.get(authUser.id);
               const isInWs = wsUserIds.has(authUser.id);
               const role = profile?.role ?? "—";
+              const normalizedRole = normalizeRole(role);
 
               return (
                 <tr key={authUser.id} className="transition-colors hover:bg-white/[0.02]">
@@ -100,7 +90,7 @@ export default async function MembersPage({ searchParams }: Props) {
                       {role === "admin" ? (
                         <ShieldCheck className="h-4 w-4 shrink-0 text-[#E8457A]" />
                       ) : (
-                        <UserCog className="h-4 w-4 shrink-0 text-blue-300" />
+                        <UserCog className="h-4 w-4 shrink-0 text-zinc-400" />
                       )}
                       <span className="font-medium text-white">
                         {profile?.name ?? authUser.email ?? "—"}
@@ -114,10 +104,10 @@ export default async function MembersPage({ searchParams }: Props) {
                   <td className="px-4 py-3">
                     <span
                       className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                        roleBadgeClass[role] ?? "bg-zinc-500/20 text-zinc-400"
+                        normalizedRole ? roleBadgeClasses[normalizedRole] : "bg-zinc-500/20 text-zinc-400"
                       }`}
                     >
-                      {roleLabel[role] ?? role}
+                      {normalizedRole ? roleLabels[normalizedRole] : role}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-zinc-400">

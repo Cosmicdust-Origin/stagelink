@@ -18,7 +18,7 @@ export async function GET(_: Request, { params }: Params) {
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { groupId } = await params;
-    const { supabase } = await requireRole(["admin"]);
+    const { supabase } = await requireRole(["admin", "manager"]);
     const body = await parseJson<Record<string, unknown>>(request);
     const { data, error } = await supabase
       .from("groups")
@@ -37,7 +37,7 @@ export async function PUT(request: Request, { params }: Params) {
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { groupId } = await params;
-    const { supabase } = await requireRole(["admin"]);
+    const { supabase } = await requireRole(["admin", "manager"]);
     const { error } = await supabase.from("groups").delete().eq("id", groupId);
 
     if (error) throw error;

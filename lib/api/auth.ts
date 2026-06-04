@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { normalizeRole } from "@/lib/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types";
 
@@ -58,8 +59,14 @@ export async function requireUser() {
 
 export async function requireRole(roles: UserRole[]) {
   const context = await requireUser();
+  const role = normalizeRole(context.profile.role);
 
-  if (!roles.includes(context.profile.role)) {
+  const allowed = roles.some((requiredRole) => {
+    if (requiredRole === "manager") return Boolean(role);
+    return role === requiredRole;
+  });
+
+  if (!allowed) {
     throw new ApiError(403, "Insufficient permissions");
   }
 

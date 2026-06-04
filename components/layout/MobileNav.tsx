@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { navItems } from "@/lib/constants";
+import { canAccessNav } from "@/lib/rbac";
 import { createClient } from "@/lib/supabase/client";
 import type { UserRole } from "@/lib/types";
 
@@ -44,7 +45,7 @@ export function MobileNav({ role }: { role?: UserRole }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  const visibleItems = navItems.filter((item) => !item.adminOnly || role === "admin");
+  const visibleItems = navItems.filter((item) => canAccessNav(item.access, role));
 
   async function logout() {
     const supabase = createClient();

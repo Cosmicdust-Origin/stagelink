@@ -24,7 +24,7 @@ export async function PUT(request: Request, { params }: Params) {
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { taskId } = await params;
-    const { supabase } = await requireRole(["admin"]);
+    const { supabase } = await requireRole(["admin", "manager"]);
     const { data, error } = await supabase
       .from("tasks")
       .update({ is_archived: true })
