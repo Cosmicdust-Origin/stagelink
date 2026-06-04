@@ -123,7 +123,8 @@ export function RatesManager({
                 className="h-10 w-full rounded-md border border-white/10 bg-[#101114] pl-3 pr-8 text-white"
                 type="number"
                 min="0"
-                step="100"
+                step="1"
+                inputMode="numeric"
                 placeholder="5000"
                 value={unitPrice}
                 onChange={(e) => setUnitPrice(e.target.value)}
