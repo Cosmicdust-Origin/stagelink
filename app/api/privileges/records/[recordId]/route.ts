@@ -1,4 +1,4 @@
-import { handleApiError, json, parseJson, requireRole } from "@/lib/api/auth";
+import { ApiError, handleApiError, json, parseJson, requireRoleWithWorkspace } from "@/lib/api/auth";
 
 type Params = { params: Promise<{ recordId: string }> };
 type PatchBody = { quantity?: number; settled_at?: string | null };
@@ -7,8 +7,15 @@ type PatchBody = { quantity?: number; settled_at?: string | null };
 export async function PATCH(request: Request, { params }: Params) {
   try {
     const { recordId } = await params;
-    const { supabase } = await requireRole(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<PatchBody>(request);
+    const { data: record } = await supabase
+      .from("privilege_records")
+      .select("id, events!inner(workspace_id)")
+      .eq("id", recordId)
+      .eq("events.workspace_id", workspaceId)
+      .single();
+    if (!record) throw new ApiError(404, "Privilege record not found");
 
     const patch: Record<string, unknown> = {};
 
@@ -41,7 +48,14 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { recordId } = await params;
-    const { supabase } = await requireRole(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { data: record } = await supabase
+      .from("privilege_records")
+      .select("id, events!inner(workspace_id)")
+      .eq("id", recordId)
+      .eq("events.workspace_id", workspaceId)
+      .single();
+    if (!record) throw new ApiError(404, "Privilege record not found");
 
     const { error } = await supabase
       .from("privilege_records")

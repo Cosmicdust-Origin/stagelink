@@ -1,5 +1,12 @@
-import { handleApiError, json, parseJson, requireRole, requireUser } from "@/lib/api/auth";
-import { getWorkspaceId } from "@/lib/workspace";
+import {
+  ApiError,
+  handleApiError,
+  json,
+  parseJson,
+  pickAllowed,
+  requireRoleWithWorkspace,
+  requireWorkspace,
+} from "@/lib/api/auth";
 
 type GroupBody = {
   name: string;
@@ -7,17 +14,16 @@ type GroupBody = {
   description?: string;
   cover_image_url?: string;
 };
+const groupCreateFields = ["name", "debut_date", "description", "cover_image_url"] as const;
 
 export async function GET() {
   try {
-    const { supabase, user } = await requireUser();
-    const wsId = await getWorkspaceId(supabase, user.id);
-    if (!wsId) return json({ groups: [] });
+    const { supabase, workspaceId } = await requireWorkspace();
 
     const { data, error } = await supabase
       .from("groups")
       .select("*, group_members(count)")
-      .eq("workspace_id", wsId)
+      .eq("workspace_id", workspaceId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -29,14 +35,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { supabase, user } = await requireRole(["admin", "manager"]);
-    const wsId = await getWorkspaceId(supabase, user.id);
-    if (!wsId) return json({ error: "워크스페이스 없음" }, 400);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
 
     const body = await parseJson<GroupBody>(request);
+    const payload = pickAllowed(body, groupCreateFields);
+    if (!payload.name) throw new ApiError(400, "Missing group name");
+
     const { data, error } = await supabase
       .from("groups")
-      .insert({ ...body, workspace_id: wsId })
+      .insert({ ...payload, workspace_id: workspaceId })
       .select("*")
       .single();
 

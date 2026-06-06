@@ -4,6 +4,7 @@ import { MemberManager } from "@/components/groups/MemberManager";
 import { MonthlyBarChart } from "@/components/privileges/MonthlyBarChart";
 import { canOperate } from "@/lib/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getWorkspaceId } from "@/lib/workspace";
 
 type Params = { params: Promise<{ groupId: string }> };
 
@@ -13,10 +14,17 @@ export default async function GroupDetailPage({ params }: Params) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const workspaceId = user ? await getWorkspaceId(supabase, user.id) : null;
   const [{ data: group }, { data: members }, { data: events }, { data: profile }] = await Promise.all([
-    supabase.from("groups").select("*").eq("id", groupId).single(),
+    supabase.from("groups").select("*").eq("id", groupId).eq("workspace_id", workspaceId).single(),
     supabase.from("group_members").select("*, members(id,name)").eq("group_id", groupId),
-    supabase.from("events").select("*").eq("group_id", groupId).order("start_at", { ascending: false }).limit(5),
+    supabase
+      .from("events")
+      .select("*")
+      .eq("group_id", groupId)
+      .eq("workspace_id", workspaceId)
+      .order("start_at", { ascending: false })
+      .limit(5),
     user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
   ]);
   const canEdit = canOperate(profile?.role);

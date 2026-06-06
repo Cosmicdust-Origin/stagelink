@@ -1,16 +1,22 @@
-import { handleApiError, json, parseJson, requireRole, requireUser } from "@/lib/api/auth";
-import { getWorkspaceId } from "@/lib/workspace";
+import {
+  handleApiError,
+  json,
+  parseJson,
+  pickAllowed,
+  requireRoleWithWorkspace,
+  requireWorkspace,
+} from "@/lib/api/auth";
+
+const noticeCreateFields = ["title", "content", "target_group_id", "is_pinned"] as const;
 
 export async function GET() {
   try {
-    const { supabase, user } = await requireUser();
-    const wsId = await getWorkspaceId(supabase, user.id);
-    if (!wsId) return json({ notices: [] });
+    const { supabase, workspaceId } = await requireWorkspace();
 
     const { data, error } = await supabase
       .from("notices")
       .select("*, profiles!notices_author_id_fkey(name), groups(name)")
-      .eq("workspace_id", wsId)
+      .eq("workspace_id", workspaceId)
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false });
 
@@ -23,14 +29,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { supabase, user } = await requireRole(["admin", "manager"]);
-    const wsId = await getWorkspaceId(supabase, user.id);
-    if (!wsId) return json({ error: "워크스페이스 없음" }, 400);
+    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
 
     const body = await parseJson<Record<string, unknown>>(request);
+    const payload = pickAllowed(body, noticeCreateFields);
     const { data, error } = await supabase
       .from("notices")
-      .insert({ ...body, author_id: user.id, workspace_id: wsId })
+      .insert({ ...payload, author_id: user.id, workspace_id: workspaceId })
       .select("*")
       .single();
 

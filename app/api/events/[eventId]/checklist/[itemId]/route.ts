@@ -1,11 +1,19 @@
-import { handleApiError, json, parseJson, requireRole } from "@/lib/api/auth";
+import { ApiError, handleApiError, json, parseJson, requireRoleWithWorkspace } from "@/lib/api/auth";
 
 type Params = { params: Promise<{ itemId: string }> };
 
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { itemId } = await params;
-    const { supabase } = await requireRole(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { data: item } = await supabase
+      .from("event_checklists")
+      .select("id, events!inner(workspace_id)")
+      .eq("id", itemId)
+      .eq("events.workspace_id", workspaceId)
+      .single();
+    if (!item) throw new ApiError(404, "Checklist item not found");
+
     const { error } = await supabase.from("event_checklists").delete().eq("id", itemId);
     if (error) throw error;
     return json({ success: true });
@@ -17,8 +25,16 @@ export async function DELETE(_: Request, { params }: Params) {
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { itemId } = await params;
-    const { supabase, user } = await requireRole(["admin", "manager"]);
+    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<{ is_checked: boolean }>(request);
+    const { data: item } = await supabase
+      .from("event_checklists")
+      .select("id, events!inner(workspace_id)")
+      .eq("id", itemId)
+      .eq("events.workspace_id", workspaceId)
+      .single();
+    if (!item) throw new ApiError(404, "Checklist item not found");
+
     const { data, error } = await supabase
       .from("event_checklists")
       .update({

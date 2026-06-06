@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { normalizeRole } from "@/lib/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types";
+import { getWorkspaceId } from "@/lib/workspace";
 
 export class ApiError extends Error {
   constructor(
@@ -71,4 +72,41 @@ export async function requireRole(roles: UserRole[]) {
   }
 
   return context;
+}
+
+export async function requireWorkspace() {
+  const context = await requireUser();
+  const workspaceId = await getWorkspaceId(context.supabase, context.user.id);
+
+  if (!workspaceId) {
+    throw new ApiError(403, "Workspace is missing");
+  }
+
+  return { ...context, workspaceId };
+}
+
+export async function requireRoleWithWorkspace(roles: UserRole[]) {
+  const context = await requireRole(roles);
+  const workspaceId = await getWorkspaceId(context.supabase, context.user.id);
+
+  if (!workspaceId) {
+    throw new ApiError(403, "Workspace is missing");
+  }
+
+  return { ...context, workspaceId };
+}
+
+export function pickAllowed<T extends Record<string, unknown>, K extends keyof T>(
+  body: T,
+  keys: readonly K[],
+) {
+  const payload: Partial<Pick<T, K>> = {};
+
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(body, key)) {
+      payload[key] = body[key];
+    }
+  }
+
+  return payload;
 }

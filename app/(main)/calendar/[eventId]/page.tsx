@@ -5,6 +5,7 @@ import { TimetablePanel } from "@/components/calendar/TimetablePanel";
 import { canOperate } from "@/lib/rbac";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
+import { getWorkspaceId } from "@/lib/workspace";
 
 type Params = { params: Promise<{ eventId: string }> };
 
@@ -14,6 +15,7 @@ export default async function EventDetailPage({ params }: Params) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const workspaceId = user ? await getWorkspaceId(supabase, user.id) : null;
 
   const [
     { data: event },
@@ -29,14 +31,15 @@ export default async function EventDetailPage({ params }: Params) {
       .from("events")
       .select("*, event_groups(group_id, groups(name))")
       .eq("id", eventId)
+      .eq("workspace_id", workspaceId)
       .single(),
     supabase.from("event_checklists").select("*").eq("event_id", eventId).order("sort_order"),
     supabase.from("timetable_entries").select("id,start_time,end_time,group_id,note,sort_order,groups(name)").eq("event_id", eventId).order("sort_order"),
-    supabase.from("privilege_types").select("*").eq("is_active", true).order("created_at"),
+    supabase.from("privilege_types").select("*").eq("workspace_id", workspaceId).eq("is_active", true).order("created_at"),
     supabase.from("privilege_records").select("*").eq("event_id", eventId),
     supabase.from("profiles").select("*").eq("role", "member").order("name"),
     user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
-    supabase.from("groups").select("id,name").order("name"),
+    supabase.from("groups").select("id,name").eq("workspace_id", workspaceId).order("name"),
   ]);
 
   const canEdit = canOperate(profile?.role);

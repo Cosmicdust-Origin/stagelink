@@ -1,4 +1,4 @@
-import { handleApiError, json, parseJson, requireRole } from "@/lib/api/auth";
+import { ApiError, handleApiError, json, parseJson, requireRoleWithWorkspace } from "@/lib/api/auth";
 
 type Params = { params: Promise<{ eventId: string }> };
 type Body = {
@@ -12,7 +12,15 @@ type Body = {
 export async function GET(_: Request, { params }: Params) {
   try {
     const { eventId } = await params;
-    const { supabase } = await requireRole(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { data: event } = await supabase
+      .from("events")
+      .select("id")
+      .eq("id", eventId)
+      .eq("workspace_id", workspaceId)
+      .single();
+    if (!event) throw new ApiError(404, "Event not found");
+
     const { data, error } = await supabase
       .from("privilege_records")
       .select("*, members(name), privilege_types(name,unit_price)")
@@ -28,8 +36,37 @@ export async function GET(_: Request, { params }: Params) {
 export async function POST(request: Request, { params }: Params) {
   try {
     const { eventId } = await params;
-    const { supabase, user } = await requireRole(["admin", "manager"]);
+    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<Body>(request);
+
+    const { data: event } = await supabase
+      .from("events")
+      .select("id")
+      .eq("id", eventId)
+      .eq("workspace_id", workspaceId)
+      .single();
+    if (!event) throw new ApiError(404, "Event not found");
+
+    const memberIds = [...new Set(body.records.map((record) => record.member_id))];
+    const typeIds = [...new Set(body.records.map((record) => record.privilege_type_id))];
+    if (memberIds.length > 0) {
+      const { count, error: memberError } = await supabase
+        .from("members")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .in("id", memberIds);
+      if (memberError) throw memberError;
+      if ((count ?? 0) !== memberIds.length) throw new ApiError(400, "Invalid member");
+    }
+    if (typeIds.length > 0) {
+      const { count, error: typeError } = await supabase
+        .from("privilege_types")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .in("id", typeIds);
+      if (typeError) throw typeError;
+      if ((count ?? 0) !== typeIds.length) throw new ApiError(400, "Invalid privilege type");
+    }
 
     const { error } = await supabase.from("privilege_records").upsert(
       body.records.map((record) => ({

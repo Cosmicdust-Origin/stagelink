@@ -1,12 +1,23 @@
-import { handleApiError, json, parseJson, requireRole } from "@/lib/api/auth";
+import {
+  handleApiError,
+  json,
+  parseJson,
+  pickAllowed,
+  requireRoleWithWorkspace,
+} from "@/lib/api/auth";
 
 type Params = { params: Promise<{ rateId: string }> };
+const settlementRateUpdateFields = ["unit_price", "valid_from", "valid_until"] as const;
 
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { rateId } = await params;
-    const { supabase } = await requireRole(["admin", "owner"]);
-    const { error } = await supabase.from("settlement_rates").delete().eq("id", rateId);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner"]);
+    const { error } = await supabase
+      .from("settlement_rates")
+      .delete()
+      .eq("id", rateId)
+      .eq("workspace_id", workspaceId);
     if (error) throw error;
     return json({ success: true });
   } catch (error) {
@@ -17,12 +28,14 @@ export async function DELETE(_: Request, { params }: Params) {
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { rateId } = await params;
-    const { supabase } = await requireRole(["admin", "owner"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner"]);
     const body = await parseJson<Record<string, unknown>>(request);
+    const payload = pickAllowed(body, settlementRateUpdateFields);
     const { data, error } = await supabase
       .from("settlement_rates")
-      .update({ ...body, updated_at: new Date().toISOString() })
+      .update({ ...payload, updated_at: new Date().toISOString() })
       .eq("id", rateId)
+      .eq("workspace_id", workspaceId)
       .select("*")
       .single();
 

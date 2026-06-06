@@ -1,6 +1,13 @@
 import { monthRange } from "@/lib/utils";
-import { handleApiError, json, parseJson, requireRole, requireUser } from "@/lib/api/auth";
-import { getWorkspaceId } from "@/lib/workspace";
+import {
+  ApiError,
+  handleApiError,
+  json,
+  parseJson,
+  pickAllowed,
+  requireRoleWithWorkspace,
+  requireWorkspace,
+} from "@/lib/api/auth";
 
 type EventBody = {
   title: string;
@@ -15,12 +22,21 @@ type EventBody = {
   memo?: string;
   checklist_template_ids?: string[];
 };
+const eventCreateFields = [
+  "title",
+  "event_type",
+  "group_id",
+  "venue",
+  "start_at",
+  "end_at",
+  "manager_id",
+  "on_site_manager",
+  "memo",
+] as const;
 
 export async function GET(request: Request) {
   try {
-    const { supabase, user } = await requireUser();
-    const wsId = await getWorkspaceId(supabase, user.id);
-    if (!wsId) return json({ events: [] });
+    const { supabase, workspaceId } = await requireWorkspace();
 
     const { searchParams } = new URL(request.url);
     const month = searchParams.get("month");
@@ -29,7 +45,7 @@ export async function GET(request: Request) {
     let query = supabase
       .from("events")
       .select("id,title,event_type,group_id,venue,start_at,end_at")
-      .eq("workspace_id", wsId)
+      .eq("workspace_id", workspaceId)
       .order("start_at");
 
     if (month) {
@@ -48,22 +64,43 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { supabase, user } = await requireRole(["admin", "manager"]);
-    const wsId = await getWorkspaceId(supabase, user.id);
-    if (!wsId) return json({ error: "워크스페이스 없음" }, 400);
+    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
 
     const body = await parseJson<EventBody>(request);
-    const { checklist_template_ids: checklistTemplateIds, group_ids: groupIds, ...eventPayload } = body;
+    const { checklist_template_ids: checklistTemplateIds, group_ids: groupIds } = body;
+    const eventPayload = pickAllowed(body, eventCreateFields);
+
+    if (!eventPayload.title || !eventPayload.start_at || !eventPayload.end_at) {
+      throw new ApiError(400, "Missing required event fields");
+    }
+
+    if (eventPayload.group_id) {
+      const { data: group, error: groupError } = await supabase
+        .from("groups")
+        .select("id")
+        .eq("id", eventPayload.group_id)
+        .eq("workspace_id", workspaceId)
+        .single();
+      if (groupError || !group) throw new ApiError(400, "Invalid group");
+    }
 
     const { data: event, error } = await supabase
       .from("events")
-      .insert({ ...eventPayload, created_by: user.id, workspace_id: wsId })
+      .insert({ ...eventPayload, created_by: user.id, workspace_id: workspaceId })
       .select("*")
       .single();
     if (error) throw error;
 
     // event_groups 에 다중 그룹 연결 (마이그레이션 012 적용 후 동작)
     if (groupIds && groupIds.length > 0) {
+      const { count, error: groupError } = await supabase
+        .from("groups")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .in("id", groupIds);
+      if (groupError) throw groupError;
+      if ((count ?? 0) !== groupIds.length) throw new ApiError(400, "Invalid group");
+
       const { error: egErr } = await supabase
         .from("event_groups")
         .insert(groupIds.map((gid) => ({ event_id: event.id, group_id: gid })));
@@ -78,8 +115,12 @@ export async function POST(request: Request) {
       const { data: templates, error: templateError } = await supabase
         .from("checklist_templates")
         .select("label")
+        .eq("workspace_id", workspaceId)
         .in("id", checklistTemplateIds);
       if (templateError) throw templateError;
+      if ((templates ?? []).length !== checklistTemplateIds.length) {
+        throw new ApiError(400, "Invalid checklist template");
+      }
 
       const { error: checklistError } = await supabase.from("event_checklists").insert(
         (templates ?? []).map((template, index) => ({

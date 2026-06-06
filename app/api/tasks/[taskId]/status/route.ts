@@ -1,11 +1,11 @@
-import { handleApiError, json, parseJson, requireRole } from "@/lib/api/auth";
+import { handleApiError, json, parseJson, requireRoleWithWorkspace } from "@/lib/api/auth";
 
 type Params = { params: Promise<{ taskId: string }> };
 
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { taskId } = await params;
-    const { supabase } = await requireRole(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<{ status: "todo" | "in_progress" | "done" }>(request);
     const { data, error } = await supabase
       .from("tasks")
@@ -14,6 +14,7 @@ export async function PUT(request: Request, { params }: Params) {
         completed_at: body.status === "done" ? new Date().toISOString() : null,
       })
       .eq("id", taskId)
+      .eq("workspace_id", workspaceId)
       .select("*")
       .single();
 

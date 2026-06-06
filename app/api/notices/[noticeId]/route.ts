@@ -1,15 +1,24 @@
-import { handleApiError, json, parseJson, requireRole, requireUser } from "@/lib/api/auth";
+import {
+  handleApiError,
+  json,
+  parseJson,
+  pickAllowed,
+  requireRoleWithWorkspace,
+  requireWorkspace,
+} from "@/lib/api/auth";
 
 type Params = { params: Promise<{ noticeId: string }> };
+const noticeUpdateFields = ["title", "content", "target_group_id", "is_pinned"] as const;
 
 export async function GET(_: Request, { params }: Params) {
   try {
     const { noticeId } = await params;
-    const { supabase } = await requireUser();
+    const { supabase, workspaceId } = await requireWorkspace();
     const { data, error } = await supabase
       .from("notices")
       .select("*, profiles!notices_author_id_fkey(name), notice_attachments(*)")
       .eq("id", noticeId)
+      .eq("workspace_id", workspaceId)
       .single();
 
     if (error) throw error;
@@ -22,12 +31,14 @@ export async function GET(_: Request, { params }: Params) {
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { noticeId } = await params;
-    const { supabase } = await requireRole(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<Record<string, unknown>>(request);
+    const payload = pickAllowed(body, noticeUpdateFields);
     const { data, error } = await supabase
       .from("notices")
-      .update({ ...body, updated_at: new Date().toISOString() })
+      .update({ ...payload, updated_at: new Date().toISOString() })
       .eq("id", noticeId)
+      .eq("workspace_id", workspaceId)
       .select("*")
       .single();
 
@@ -41,8 +52,12 @@ export async function PUT(request: Request, { params }: Params) {
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { noticeId } = await params;
-    const { supabase } = await requireRole(["admin", "manager"]);
-    const { error } = await supabase.from("notices").delete().eq("id", noticeId);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { error } = await supabase
+      .from("notices")
+      .delete()
+      .eq("id", noticeId)
+      .eq("workspace_id", workspaceId);
 
     if (error) throw error;
     return json({ success: true });
