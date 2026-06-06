@@ -1,6 +1,7 @@
 import { monthRange } from "@/lib/utils";
 import { handleApiError, json, requireUser } from "@/lib/api/auth";
 import { getWorkspaceId } from "@/lib/workspace";
+import { optionalMonth, optionalUuid } from "@/lib/api/validation";
 
 export async function GET(request: Request) {
   try {
@@ -9,9 +10,9 @@ export async function GET(request: Request) {
     if (!wsId) return json({ records: [], total_by_type: {} });
 
     const { searchParams } = new URL(request.url);
-    const month = searchParams.get("month");
-    const memberId = searchParams.get("member_id");
-    const groupId = searchParams.get("group_id");
+    const month = optionalMonth(searchParams.get("month"));
+    const memberId = optionalUuid(searchParams.get("member_id"), "member_id");
+    const groupId = optionalUuid(searchParams.get("group_id"), "group_id");
 
     let query = supabase
       .from("privilege_records")

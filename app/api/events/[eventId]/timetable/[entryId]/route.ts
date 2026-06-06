@@ -6,6 +6,7 @@ import {
   pickAllowed,
   requireRoleWithWorkspace,
 } from "@/lib/api/auth";
+import { optionalUuid, requireNonNegativeInteger, requireUuid } from "@/lib/api/validation";
 
 type Params = { params: Promise<{ entryId: string }> };
 const timetableUpdateFields = [
@@ -19,9 +20,14 @@ const timetableUpdateFields = [
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { entryId } = await params;
+    requireUuid(entryId, "entryId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<Record<string, unknown>>(request);
     const payload = pickAllowed(body, timetableUpdateFields);
+    if ("group_id" in payload) payload.group_id = optionalUuid(payload.group_id, "group_id") ?? null;
+    if ("sort_order" in payload && payload.sort_order != null) {
+      payload.sort_order = requireNonNegativeInteger(payload.sort_order, "sort_order");
+    }
     const { data: entry } = await supabase
       .from("timetable_entries")
       .select("id, events!inner(workspace_id)")
@@ -47,6 +53,7 @@ export async function PUT(request: Request, { params }: Params) {
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { entryId } = await params;
+    requireUuid(entryId, "entryId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const { data: entry } = await supabase
       .from("timetable_entries")

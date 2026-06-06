@@ -1,10 +1,12 @@
 import { ApiError, handleApiError, json, parseJson, requireRoleWithWorkspace } from "@/lib/api/auth";
+import { requireUuid } from "@/lib/api/validation";
 
 type Params = { params: Promise<{ itemId: string }> };
 
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { itemId } = await params;
+    requireUuid(itemId, "itemId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const { data: item } = await supabase
       .from("event_checklists")
@@ -25,8 +27,10 @@ export async function DELETE(_: Request, { params }: Params) {
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { itemId } = await params;
+    requireUuid(itemId, "itemId");
     const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<{ is_checked: boolean }>(request);
+    if (typeof body.is_checked !== "boolean") throw new ApiError(400, "Invalid is_checked");
     const { data: item } = await supabase
       .from("event_checklists")
       .select("id, events!inner(workspace_id)")

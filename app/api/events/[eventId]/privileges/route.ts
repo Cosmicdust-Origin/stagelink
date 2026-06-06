@@ -1,4 +1,5 @@
 import { ApiError, handleApiError, json, parseJson, requireRoleWithWorkspace } from "@/lib/api/auth";
+import { requireNonNegativeInteger, requireUuid } from "@/lib/api/validation";
 
 type Params = { params: Promise<{ eventId: string }> };
 type Body = {
@@ -12,6 +13,7 @@ type Body = {
 export async function GET(_: Request, { params }: Params) {
   try {
     const { eventId } = await params;
+    requireUuid(eventId, "eventId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const { data: event } = await supabase
       .from("events")
@@ -36,8 +38,15 @@ export async function GET(_: Request, { params }: Params) {
 export async function POST(request: Request, { params }: Params) {
   try {
     const { eventId } = await params;
+    requireUuid(eventId, "eventId");
     const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<Body>(request);
+    if (!Array.isArray(body.records)) throw new ApiError(400, "Invalid records");
+    body.records = body.records.map((record) => ({
+      member_id: requireUuid(record.member_id, "member_id"),
+      privilege_type_id: requireUuid(record.privilege_type_id, "privilege_type_id"),
+      quantity: requireNonNegativeInteger(record.quantity, "quantity"),
+    }));
 
     const { data: event } = await supabase
       .from("events")

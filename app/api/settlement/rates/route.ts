@@ -5,6 +5,7 @@ import {
   parseJson,
   requireRoleWithWorkspace,
 } from "@/lib/api/auth";
+import { requireNonNegativeNumber, requireUuid } from "@/lib/api/validation";
 
 export async function GET() {
   try {
@@ -36,9 +37,9 @@ export async function POST(request: Request) {
     if (!body.member_id || !body.privilege_type_id) {
       return json({ error: "멤버와 특전 유형을 선택하세요" }, 400);
     }
-    if (body.unit_price == null || isNaN(Number(body.unit_price))) {
-      return json({ error: "장당 정산액을 입력하세요" }, 400);
-    }
+    body.member_id = requireUuid(body.member_id, "member_id");
+    body.privilege_type_id = requireUuid(body.privilege_type_id, "privilege_type_id");
+    body.unit_price = requireNonNegativeNumber(body.unit_price, "unit_price");
 
     const [{ data: member }, { data: privilegeType }] = await Promise.all([
       supabase

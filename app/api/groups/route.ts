@@ -7,13 +7,8 @@ import {
   requireRoleWithWorkspace,
   requireWorkspace,
 } from "@/lib/api/auth";
+import { optionalDateString } from "@/lib/api/validation";
 
-type GroupBody = {
-  name: string;
-  debut_date?: string;
-  description?: string;
-  cover_image_url?: string;
-};
 const groupCreateFields = ["name", "debut_date", "description", "cover_image_url"] as const;
 
 export async function GET() {
@@ -37,9 +32,11 @@ export async function POST(request: Request) {
   try {
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
 
-    const body = await parseJson<GroupBody>(request);
+    const body = await parseJson<Record<string, unknown>>(request);
     const payload = pickAllowed(body, groupCreateFields);
-    if (!payload.name) throw new ApiError(400, "Missing group name");
+    if (typeof payload.name !== "string" || !payload.name.trim()) throw new ApiError(400, "Missing group name");
+    payload.name = payload.name.trim();
+    if (payload.debut_date !== undefined) payload.debut_date = optionalDateString(payload.debut_date, "debut_date") ?? null;
 
     const { data, error } = await supabase
       .from("groups")

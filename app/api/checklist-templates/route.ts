@@ -1,16 +1,13 @@
-import { handleApiError, json, parseJson, requireRole } from "@/lib/api/auth";
-import { getWorkspaceId } from "@/lib/workspace";
+import { ApiError, handleApiError, json, parseJson, requireRoleWithWorkspace } from "@/lib/api/auth";
 
 export async function GET() {
   try {
-    const { supabase, user } = await requireRole(["admin", "manager"]);
-    const wsId = await getWorkspaceId(supabase, user.id);
-    if (!wsId) return json({ templates: [] });
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
 
     const { data, error } = await supabase
       .from("checklist_templates")
       .select("*")
-      .eq("workspace_id", wsId)
+      .eq("workspace_id", workspaceId)
       .order("created_at");
 
     if (error) throw error;
@@ -22,18 +19,18 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { supabase, user } = await requireRole(["admin", "manager"]);
-    const wsId = await getWorkspaceId(supabase, user.id);
-    if (!wsId) return json({ error: "워크스페이스 없음" }, 400);
-
+    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<{ label: string; is_default?: boolean }>(request);
+    const label = body.label?.trim();
+    if (!label) throw new ApiError(400, "Missing checklist template label");
+
     const { data, error } = await supabase
       .from("checklist_templates")
       .insert({
-        label: body.label,
+        label,
         is_default: body.is_default ?? false,
         created_by: user.id,
-        workspace_id: wsId,
+        workspace_id: workspaceId,
       })
       .select("*")
       .single();

@@ -1,4 +1,5 @@
 import { ApiError, handleApiError, json, parseJson, requireRoleWithWorkspace } from "@/lib/api/auth";
+import { optionalDateString, requireNonNegativeInteger, requireUuid } from "@/lib/api/validation";
 
 type Params = { params: Promise<{ recordId: string }> };
 type PatchBody = { quantity?: number; settled_at?: string | null };
@@ -7,6 +8,7 @@ type PatchBody = { quantity?: number; settled_at?: string | null };
 export async function PATCH(request: Request, { params }: Params) {
   try {
     const { recordId } = await params;
+    requireUuid(recordId, "recordId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<PatchBody>(request);
     const { data: record } = await supabase
@@ -20,12 +22,11 @@ export async function PATCH(request: Request, { params }: Params) {
     const patch: Record<string, unknown> = {};
 
     if (body.quantity !== undefined) {
-      if (body.quantity < 0) return json({ error: "유효하지 않은 수량입니다." }, 400);
-      patch.quantity = body.quantity;
+      patch.quantity = requireNonNegativeInteger(body.quantity, "quantity");
     }
 
     if ("settled_at" in body) {
-      patch.settled_at = body.settled_at ?? null;
+      patch.settled_at = optionalDateString(body.settled_at, "settled_at") ?? null;
     }
 
     if (Object.keys(patch).length === 0) {
@@ -48,6 +49,7 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { recordId } = await params;
+    requireUuid(recordId, "recordId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const { data: record } = await supabase
       .from("privilege_records")

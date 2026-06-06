@@ -7,6 +7,7 @@ import {
   requireRoleWithWorkspace,
   requireWorkspace,
 } from "@/lib/api/auth";
+import { requireNonNegativeNumber } from "@/lib/api/validation";
 import { canAccessSettlement } from "@/lib/rbac";
 
 const privilegeTypeCreateFields = [
@@ -45,6 +46,9 @@ export async function POST(request: Request) {
     const body = await parseJson<Record<string, unknown>>(request);
     const payload = pickAllowed(body, privilegeTypeCreateFields);
     if (!payload.name) throw new ApiError(400, "Missing privilege type name");
+    if ("unit_price" in payload && payload.unit_price != null) {
+      payload.unit_price = requireNonNegativeNumber(payload.unit_price, "unit_price");
+    }
 
     const { data, error } = await supabase
       .from("privilege_types")

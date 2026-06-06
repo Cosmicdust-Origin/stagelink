@@ -6,6 +6,7 @@ import {
   requireRoleWithWorkspace,
   requireWorkspace,
 } from "@/lib/api/auth";
+import { optionalUuid, requireUuid } from "@/lib/api/validation";
 
 type Params = { params: Promise<{ noticeId: string }> };
 const noticeUpdateFields = ["title", "content", "target_group_id", "is_pinned"] as const;
@@ -13,6 +14,7 @@ const noticeUpdateFields = ["title", "content", "target_group_id", "is_pinned"] 
 export async function GET(_: Request, { params }: Params) {
   try {
     const { noticeId } = await params;
+    requireUuid(noticeId, "noticeId");
     const { supabase, workspaceId } = await requireWorkspace();
     const { data, error } = await supabase
       .from("notices")
@@ -31,9 +33,11 @@ export async function GET(_: Request, { params }: Params) {
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { noticeId } = await params;
+    requireUuid(noticeId, "noticeId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<Record<string, unknown>>(request);
     const payload = pickAllowed(body, noticeUpdateFields);
+    if (payload.target_group_id !== undefined) payload.target_group_id = optionalUuid(payload.target_group_id, "target_group_id") ?? null;
     const { data, error } = await supabase
       .from("notices")
       .update({ ...payload, updated_at: new Date().toISOString() })
@@ -52,6 +56,7 @@ export async function PUT(request: Request, { params }: Params) {
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { noticeId } = await params;
+    requireUuid(noticeId, "noticeId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const { error } = await supabase
       .from("notices")

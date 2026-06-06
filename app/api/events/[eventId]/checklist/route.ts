@@ -1,10 +1,12 @@
 import { ApiError, handleApiError, json, parseJson, requireRoleWithWorkspace, requireWorkspace } from "@/lib/api/auth";
+import { requireNonNegativeInteger, requireUuid } from "@/lib/api/validation";
 
 type Params = { params: Promise<{ eventId: string }> };
 
 export async function GET(_: Request, { params }: Params) {
   try {
     const { eventId } = await params;
+    requireUuid(eventId, "eventId");
     const { supabase, workspaceId } = await requireWorkspace();
     const { data: event } = await supabase
       .from("events")
@@ -30,8 +32,12 @@ export async function GET(_: Request, { params }: Params) {
 export async function POST(request: Request, { params }: Params) {
   try {
     const { eventId } = await params;
+    requireUuid(eventId, "eventId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<{ label: string; sort_order?: number }>(request);
+    if (!body.label?.trim()) throw new ApiError(400, "Missing checklist label");
+    const sortOrder =
+      body.sort_order == null ? undefined : requireNonNegativeInteger(body.sort_order, "sort_order");
     const { data: event } = await supabase
       .from("events")
       .select("id")
@@ -42,7 +48,7 @@ export async function POST(request: Request, { params }: Params) {
 
     const { data, error } = await supabase
       .from("event_checklists")
-      .insert({ ...body, event_id: eventId })
+      .insert({ label: body.label.trim(), sort_order: sortOrder, event_id: eventId })
       .select("*")
       .single();
 

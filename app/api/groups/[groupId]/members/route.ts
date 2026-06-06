@@ -1,5 +1,12 @@
-import { handleApiError, json, parseJson, requireRole, requireUser } from "@/lib/api/auth";
-import { getWorkspaceId } from "@/lib/workspace";
+import {
+  ApiError,
+  handleApiError,
+  json,
+  parseJson,
+  requireRoleWithWorkspace,
+  requireWorkspace,
+} from "@/lib/api/auth";
+import { requireUuid } from "@/lib/api/validation";
 
 type Params = { params: Promise<{ groupId: string }> };
 type MemberBody = { name: string; position?: string };
@@ -7,7 +14,17 @@ type MemberBody = { name: string; position?: string };
 export async function GET(_: Request, { params }: Params) {
   try {
     const { groupId } = await params;
-    const { supabase } = await requireUser();
+    requireUuid(groupId, "groupId");
+    const { supabase, workspaceId } = await requireWorkspace();
+
+    const { data: group } = await supabase
+      .from("groups")
+      .select("id")
+      .eq("id", groupId)
+      .eq("workspace_id", workspaceId)
+      .single();
+    if (!group) throw new ApiError(404, "Group not found");
+
     const { data, error } = await supabase
       .from("group_members")
       .select("*, members(id,name)")
@@ -24,23 +41,29 @@ export async function GET(_: Request, { params }: Params) {
 export async function POST(request: Request, { params }: Params) {
   try {
     const { groupId } = await params;
-    const { supabase, user } = await requireRole(["admin", "manager"]);
-    const wsId = await getWorkspaceId(supabase, user.id);
-    if (!wsId) return json({ error: "워크스페이스 없음" }, 400);
+    requireUuid(groupId, "groupId");
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin"]);
+
+    const { data: group } = await supabase
+      .from("groups")
+      .select("id")
+      .eq("id", groupId)
+      .eq("workspace_id", workspaceId)
+      .single();
+    if (!group) throw new ApiError(404, "Group not found");
 
     const body = await parseJson<MemberBody>(request);
-    if (!body.name?.trim()) return json({ error: "이름을 입력하세요" }, 400);
+    const name = body.name?.trim();
+    if (!name) throw new ApiError(400, "Missing member name");
 
-    // 동일 이름 멤버 존재 여부 확인
     const { data: existing } = await supabase
       .from("members")
       .select("id")
-      .eq("workspace_id", wsId)
-      .eq("name", body.name.trim())
+      .eq("workspace_id", workspaceId)
+      .eq("name", name)
       .maybeSingle();
 
     if (existing) {
-      // 이미 이 그룹에 속해 있는지 확인
       const { data: inGroup } = await supabase
         .from("group_members")
         .select("id")
@@ -49,10 +72,9 @@ export async function POST(request: Request, { params }: Params) {
         .maybeSingle();
 
       if (inGroup) {
-        return json({ error: `'${body.name.trim()}' 멤버가 이미 이 그룹에 속해있습니다.` }, 409);
+        return json({ error: `'${name}' member already belongs to this group.` }, 409);
       }
 
-      // 기존 멤버를 이 그룹에 연결 (새 멤버 생성 없이)
       const { data, error } = await supabase
         .from("group_members")
         .insert({ group_id: groupId, member_id: existing.id, position: body.position ?? null })
@@ -63,16 +85,14 @@ export async function POST(request: Request, { params }: Params) {
       return json({ member: data }, 201);
     }
 
-    // 1) 신규 멤버 생성
     const { data: newMember, error: memberErr } = await supabase
       .from("members")
-      .insert({ name: body.name.trim(), workspace_id: wsId })
+      .insert({ name, workspace_id: workspaceId })
       .select("id")
       .single();
 
     if (memberErr) throw memberErr;
 
-    // 2) group_members 에 연결
     const { data, error } = await supabase
       .from("group_members")
       .insert({ group_id: groupId, member_id: newMember.id, position: body.position ?? null })

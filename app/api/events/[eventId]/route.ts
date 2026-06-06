@@ -7,6 +7,7 @@ import {
   requireRoleWithWorkspace,
   requireWorkspace,
 } from "@/lib/api/auth";
+import { optionalUuid, requireDateString, requireUuid } from "@/lib/api/validation";
 
 type Params = { params: Promise<{ eventId: string }> };
 const eventUpdateFields = [
@@ -24,6 +25,7 @@ const eventUpdateFields = [
 export async function GET(_: Request, { params }: Params) {
   try {
     const { eventId } = await params;
+    requireUuid(eventId, "eventId");
     const { supabase, workspaceId } = await requireWorkspace();
     const { data, error } = await supabase
       .from("events")
@@ -42,6 +44,7 @@ export async function GET(_: Request, { params }: Params) {
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { eventId } = await params;
+    requireUuid(eventId, "eventId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<Record<string, unknown>>(request);
 
@@ -57,15 +60,16 @@ export async function PUT(request: Request, { params }: Params) {
     if ("group_ids" in body) {
       const groupIds = (body.group_ids as string[]) ?? [];
       delete body.group_ids;
+      const validGroupIds = groupIds.map((groupId) => optionalUuid(groupId, "group_id")!);
 
-      if (groupIds.length > 0) {
+      if (validGroupIds.length > 0) {
         const { count, error: groupError } = await supabase
           .from("groups")
           .select("id", { count: "exact", head: true })
           .eq("workspace_id", workspaceId)
-          .in("id", groupIds);
+          .in("id", validGroupIds);
         if (groupError) throw groupError;
-        if ((count ?? 0) !== groupIds.length) throw new ApiError(400, "Invalid group");
+        if ((count ?? 0) !== validGroupIds.length) throw new ApiError(400, "Invalid group");
       }
 
       // 마이그레이션 012 미적용 시 무시하고 계속 진행
@@ -75,16 +79,19 @@ export async function PUT(request: Request, { params }: Params) {
         .eq("event_id", eventId);
       if (delErr) {
         console.warn("[event_groups delete failed]", delErr.message);
-      } else if (groupIds.length > 0) {
+      } else if (validGroupIds.length > 0) {
         const { error: insErr } = await supabase
           .from("event_groups")
-          .insert(groupIds.map((gid) => ({ event_id: eventId, group_id: gid })));
+          .insert(validGroupIds.map((gid) => ({ event_id: eventId, group_id: gid })));
         if (insErr) console.warn("[event_groups insert failed]", insErr.message);
       }
     }
 
     // events 테이블 업데이트 (group_ids 제외한 나머지)
     const payload = pickAllowed(body, eventUpdateFields);
+    if (payload.start_at) payload.start_at = requireDateString(payload.start_at, "start_at");
+    if (payload.end_at) payload.end_at = requireDateString(payload.end_at, "end_at");
+    if (payload.group_id) payload.group_id = optionalUuid(payload.group_id, "group_id") ?? null;
     if (Object.keys(payload).length > 0) {
       const { data, error } = await supabase
         .from("events")
@@ -106,6 +113,7 @@ export async function PUT(request: Request, { params }: Params) {
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { eventId } = await params;
+    requireUuid(eventId, "eventId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const { error } = await supabase
       .from("events")

@@ -1,10 +1,12 @@
 import {
+  ApiError,
   handleApiError,
   json,
   parseJson,
   pickAllowed,
   requireRoleWithWorkspace,
 } from "@/lib/api/auth";
+import { requireNonNegativeNumber, requireUuid } from "@/lib/api/validation";
 
 type Params = { params: Promise<{ typeId: string }> };
 const privilegeTypeUpdateFields = [
@@ -18,9 +20,16 @@ const privilegeTypeUpdateFields = [
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { typeId } = await params;
+    requireUuid(typeId, "typeId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner"]);
     const body = await parseJson<Record<string, unknown>>(request);
     const payload = pickAllowed(body, privilegeTypeUpdateFields);
+    if ("name" in payload && typeof payload.name === "string" && !payload.name.trim()) {
+      throw new ApiError(400, "Missing privilege type name");
+    }
+    if ("unit_price" in payload && payload.unit_price != null) {
+      payload.unit_price = requireNonNegativeNumber(payload.unit_price, "unit_price");
+    }
     const { data, error } = await supabase
       .from("privilege_types")
       .update(payload)
@@ -39,6 +48,7 @@ export async function PUT(request: Request, { params }: Params) {
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { typeId } = await params;
+    requireUuid(typeId, "typeId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner"]);
     const { error } = await supabase
       .from("privilege_types")

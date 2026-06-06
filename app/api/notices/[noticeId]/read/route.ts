@@ -1,10 +1,12 @@
 import { handleApiError, json, requireUser } from "@/lib/api/auth";
+import { requireUuid } from "@/lib/api/validation";
 
 type Params = { params: Promise<{ noticeId: string }> };
 
 export async function POST(_: Request, { params }: Params) {
   try {
     const { noticeId } = await params;
+    requireUuid(noticeId, "noticeId");
     const { supabase, user } = await requireUser();
     const { error } = await supabase
       .from("notice_reads")

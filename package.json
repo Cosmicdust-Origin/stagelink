@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "security:audit": "node scripts/security-audit.mjs"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.20",

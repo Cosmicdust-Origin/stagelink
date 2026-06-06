@@ -8,6 +8,7 @@ import {
   requireRoleWithWorkspace,
   requireWorkspace,
 } from "@/lib/api/auth";
+import { optionalMonth, optionalUuid, requireDateString } from "@/lib/api/validation";
 
 type EventBody = {
   title: string;
@@ -39,8 +40,8 @@ export async function GET(request: Request) {
     const { supabase, workspaceId } = await requireWorkspace();
 
     const { searchParams } = new URL(request.url);
-    const month = searchParams.get("month");
-    const groupId = searchParams.get("group_id");
+    const month = optionalMonth(searchParams.get("month"));
+    const groupId = optionalUuid(searchParams.get("group_id"), "group_id");
 
     let query = supabase
       .from("events")
@@ -73,6 +74,12 @@ export async function POST(request: Request) {
     if (!eventPayload.title || !eventPayload.start_at || !eventPayload.end_at) {
       throw new ApiError(400, "Missing required event fields");
     }
+    eventPayload.start_at = requireDateString(eventPayload.start_at, "start_at");
+    eventPayload.end_at = requireDateString(eventPayload.end_at, "end_at");
+
+    if (eventPayload.group_id !== undefined) {
+      eventPayload.group_id = optionalUuid(eventPayload.group_id, "group_id") ?? null;
+    }
 
     if (eventPayload.group_id) {
       const { data: group, error: groupError } = await supabase
@@ -93,17 +100,19 @@ export async function POST(request: Request) {
 
     // event_groups 에 다중 그룹 연결 (마이그레이션 012 적용 후 동작)
     if (groupIds && groupIds.length > 0) {
+      const validGroupIds = groupIds.map((groupId) => optionalUuid(groupId, "group_id"));
+      if (validGroupIds.some((groupId) => !groupId)) throw new ApiError(400, "Invalid group");
       const { count, error: groupError } = await supabase
         .from("groups")
         .select("id", { count: "exact", head: true })
         .eq("workspace_id", workspaceId)
-        .in("id", groupIds);
+        .in("id", validGroupIds as string[]);
       if (groupError) throw groupError;
-      if ((count ?? 0) !== groupIds.length) throw new ApiError(400, "Invalid group");
+      if ((count ?? 0) !== validGroupIds.length) throw new ApiError(400, "Invalid group");
 
       const { error: egErr } = await supabase
         .from("event_groups")
-        .insert(groupIds.map((gid) => ({ event_id: event.id, group_id: gid })));
+        .insert((validGroupIds as string[]).map((gid) => ({ event_id: event.id, group_id: gid })));
       if (egErr) {
         // 테이블 미존재 등 마이그레이션 미적용 시 이벤트 생성은 유지하고 경고만 반환
         console.warn("[event_groups insert failed]", egErr.message);
@@ -112,13 +121,19 @@ export async function POST(request: Request) {
     }
 
     if (checklistTemplateIds?.length) {
+      const validTemplateIds = checklistTemplateIds.map((templateId) =>
+        optionalUuid(templateId, "checklist_template_id"),
+      );
+      if (validTemplateIds.some((templateId) => !templateId)) {
+        throw new ApiError(400, "Invalid checklist template");
+      }
       const { data: templates, error: templateError } = await supabase
         .from("checklist_templates")
         .select("label")
         .eq("workspace_id", workspaceId)
-        .in("id", checklistTemplateIds);
+        .in("id", validTemplateIds as string[]);
       if (templateError) throw templateError;
-      if ((templates ?? []).length !== checklistTemplateIds.length) {
+      if ((templates ?? []).length !== validTemplateIds.length) {
         throw new ApiError(400, "Invalid checklist template");
       }
 

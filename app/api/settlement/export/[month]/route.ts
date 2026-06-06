@@ -3,12 +3,14 @@ import { createElement, type ReactElement } from "react";
 import { SettlementPDFDocument } from "@/components/settlement/SettlementPDFDocument";
 import { getSettlementSummary } from "@/lib/api/settlement";
 import { requireRole } from "@/lib/api/auth";
+import { optionalMonth } from "@/lib/api/validation";
 import { getWorkspaceId } from "@/lib/workspace";
 
 type Params = { params: Promise<{ month: string }> };
 
 export async function GET(_: Request, { params }: Params) {
-  const { month } = await params;
+  const { month: rawMonth } = await params;
+  const month = optionalMonth(rawMonth, "month") ?? rawMonth;
   const { supabase, user } = await requireRole(["admin", "owner"]);
   const wsId = await getWorkspaceId(supabase, user.id);
 

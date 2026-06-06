@@ -6,6 +6,7 @@ import {
   requireRoleWithWorkspace,
   requireWorkspace,
 } from "@/lib/api/auth";
+import { optionalUuid } from "@/lib/api/validation";
 
 const noticeCreateFields = ["title", "content", "target_group_id", "is_pinned"] as const;
 
@@ -33,6 +34,9 @@ export async function POST(request: Request) {
 
     const body = await parseJson<Record<string, unknown>>(request);
     const payload = pickAllowed(body, noticeCreateFields);
+    if ("target_group_id" in payload) {
+      payload.target_group_id = optionalUuid(payload.target_group_id, "target_group_id") ?? null;
+    }
     const { data, error } = await supabase
       .from("notices")
       .insert({ ...payload, author_id: user.id, workspace_id: workspaceId })

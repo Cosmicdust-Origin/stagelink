@@ -6,6 +6,7 @@ import {
   requireRoleWithWorkspace,
   requireWorkspace,
 } from "@/lib/api/auth";
+import { optionalDateString, requireNonNegativeNumber, requireUuid } from "@/lib/api/validation";
 
 type Params = { params: Promise<{ groupId: string }> };
 const groupUpdateFields = [
@@ -19,6 +20,7 @@ const groupUpdateFields = [
 export async function GET(_: Request, { params }: Params) {
   try {
     const { groupId } = await params;
+    requireUuid(groupId, "groupId");
     const { supabase, workspaceId } = await requireWorkspace();
     const { data, error } = await supabase
       .from("groups")
@@ -37,9 +39,14 @@ export async function GET(_: Request, { params }: Params) {
 export async function PUT(request: Request, { params }: Params) {
   try {
     const { groupId } = await params;
+    requireUuid(groupId, "groupId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const body = await parseJson<Record<string, unknown>>(request);
     const payload = pickAllowed(body, groupUpdateFields);
+    if (payload.debut_date !== undefined) payload.debut_date = optionalDateString(payload.debut_date, "debut_date") ?? null;
+    if (payload.privilege_unit_price !== undefined) {
+      payload.privilege_unit_price = requireNonNegativeNumber(payload.privilege_unit_price, "privilege_unit_price");
+    }
     const { data, error } = await supabase
       .from("groups")
       .update(payload)
@@ -58,6 +65,7 @@ export async function PUT(request: Request, { params }: Params) {
 export async function DELETE(_: Request, { params }: Params) {
   try {
     const { groupId } = await params;
+    requireUuid(groupId, "groupId");
     const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
     const { error } = await supabase
       .from("groups")

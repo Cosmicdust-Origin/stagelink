@@ -1,17 +1,20 @@
-import { handleApiError, json, parseJson, requireRole, requireUser } from "@/lib/api/auth";
-import { getWorkspaceId } from "@/lib/workspace";
+import {
+  ApiError,
+  handleApiError,
+  json,
+  parseJson,
+  requireRoleWithWorkspace,
+  requireWorkspace,
+} from "@/lib/api/auth";
 
-/** GET /api/members — 워크스페이스 소속 아티스트 멤버 목록 */
 export async function GET() {
   try {
-    const { supabase, user } = await requireUser();
-    const wsId = await getWorkspaceId(supabase, user.id);
-    if (!wsId) return json({ members: [] });
+    const { supabase, workspaceId } = await requireWorkspace();
 
     const { data, error } = await supabase
       .from("members")
       .select("id,name,created_at")
-      .eq("workspace_id", wsId)
+      .eq("workspace_id", workspaceId)
       .order("name");
 
     if (error) throw error;
@@ -21,19 +24,16 @@ export async function GET() {
   }
 }
 
-/** POST /api/members — 새 아티스트 멤버 생성 */
 export async function POST(request: Request) {
   try {
-    const { supabase, user } = await requireRole(["admin", "manager"]);
-    const wsId = await getWorkspaceId(supabase, user.id);
-    if (!wsId) return json({ error: "워크스페이스 없음" }, 400);
-
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin"]);
     const { name } = await parseJson<{ name: string }>(request);
-    if (!name?.trim()) return json({ error: "이름을 입력하세요" }, 400);
+    const trimmedName = name?.trim();
+    if (!trimmedName) throw new ApiError(400, "Missing member name");
 
     const { data, error } = await supabase
       .from("members")
-      .insert({ name: name.trim(), workspace_id: wsId })
+      .insert({ name: trimmedName, workspace_id: workspaceId })
       .select("*")
       .single();
 
