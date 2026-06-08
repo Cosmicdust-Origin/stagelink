@@ -23,25 +23,49 @@ export function AcceptInviteForm() {
   // Exchange invite token for session on mount
   useEffect(() => {
     async function verify() {
+      const supabase = createClient();
+
+      // ── 방식 1: token_hash (Supabase email OTP 방식) ──────────
       const token_hash = searchParams.get("token_hash");
       const type = searchParams.get("type");
-
-      if (!token_hash || type !== "invite") {
-        setVerifyError("유효하지 않은 초대 링크입니다. 이메일의 링크를 다시 확인해주세요.");
-        setStatus("error");
+      if (token_hash && type === "invite") {
+        const { error } = await supabase.auth.verifyOtp({ token_hash, type: "invite" });
+        if (error) {
+          setVerifyError("초대 링크가 만료되었거나 이미 사용된 링크입니다. 관리자에게 재초대를 요청해주세요.");
+          setStatus("error");
+          return;
+        }
+        setStatus("form");
         return;
       }
 
-      const supabase = createClient();
-      const { error } = await supabase.auth.verifyOtp({ token_hash, type: "invite" });
-
-      if (error) {
-        setVerifyError("초대 링크가 만료되었거나 이미 사용된 링크입니다. 관리자에게 재초대를 요청해주세요.");
-        setStatus("error");
+      // ── 방식 2: code (PKCE 방식, 현재 Supabase 기본값) ─────────
+      const code = searchParams.get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          setVerifyError("초대 링크가 만료되었거나 이미 사용된 링크입니다. 관리자에게 재초대를 요청해주세요.");
+          setStatus("error");
+          return;
+        }
+        setStatus("form");
         return;
       }
 
-      setStatus("form");
+      // ── 방식 3: implicit (URL 해시에 access_token) ────────────
+      const hash = typeof window !== "undefined" ? window.location.hash : "";
+      if (hash.includes("access_token") && hash.includes("type=invite")) {
+        // Supabase 클라이언트가 해시를 자동으로 파싱해서 세션을 수립함
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setStatus("form");
+          return;
+        }
+      }
+
+      // 어떤 방식도 해당하지 않으면 잘못된 링크
+      setVerifyError("유효하지 않은 초대 링크입니다. 이메일의 링크를 다시 확인해주세요.");
+      setStatus("error");
     }
 
     verify();
