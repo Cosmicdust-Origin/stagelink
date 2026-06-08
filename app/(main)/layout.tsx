@@ -13,8 +13,12 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   } = await supabase.auth.getUser();
 
   const { data: profile } = user
-    ? await supabase.from("profiles").select("role").eq("id", user.id).single()
+    ? await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
     : { data: null };
+
+  if (user && !profile) {
+    redirect("/login");
+  }
 
   // Service masters are global operators and can use /master without a bound workspace.
   if (user && profile && profile.role !== "super_admin") {

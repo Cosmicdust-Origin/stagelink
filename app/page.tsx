@@ -13,7 +13,9 @@ export default async function Home() {
     .from("profiles")
     .select("role")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
+
+  if (!profile) redirect("/login");
 
   redirect(profile?.role === "super_admin" ? "/master" : "/dashboard");
 }
