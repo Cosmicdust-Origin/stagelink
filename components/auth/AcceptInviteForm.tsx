@@ -15,6 +15,7 @@ export function AcceptInviteForm() {
   const [verifyError, setVerifyError] = useState("");
 
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [formError, setFormError] = useState("");
@@ -76,6 +77,11 @@ export function AcceptInviteForm() {
     e.preventDefault();
     setFormError("");
 
+    const trimmedUsername = username.trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,20}$/.test(trimmedUsername)) {
+      setFormError("아이디는 영문 소문자·숫자·밑줄(_)만 사용 가능하며 3~20자여야 합니다.");
+      return;
+    }
     if (password !== passwordConfirm) {
       setFormError("비밀번호가 일치하지 않습니다.");
       return;
@@ -90,7 +96,7 @@ export function AcceptInviteForm() {
     const res = await fetch("/api/auth/accept-invite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), password }),
+      body: JSON.stringify({ name: name.trim(), username: trimmedUsername, password }),
     });
 
     setLoading(false);
@@ -131,6 +137,17 @@ export function AcceptInviteForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="홍길동"
+          required
+        />
+      </label>
+      <label className="block text-sm text-zinc-300">
+        아이디 <span className="text-zinc-500">(로그인에 사용)</span>
+        <input
+          className="mt-2 h-11 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white placeholder-zinc-600"
+          autoComplete="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="영문 소문자·숫자·밑줄, 3~20자"
           required
         />
       </label>
