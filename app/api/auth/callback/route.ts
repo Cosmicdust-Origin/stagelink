@@ -50,7 +50,12 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
     }
-  } else if (token_hash && type) {
+    return NextResponse.redirect(
+      `${origin}/accept-invite?error=${encodeURIComponent(error.message)}&method=code`,
+    );
+  }
+
+  if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({
       token_hash,
       type: type as "invite" | "recovery" | "email",
@@ -58,8 +63,14 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
     }
+    return NextResponse.redirect(
+      `${origin}/accept-invite?error=${encodeURIComponent(error.message)}&method=token_hash`,
+    );
   }
 
-  // 교환 실패 시 에러 파라미터와 함께 리다이렉트
-  return NextResponse.redirect(`${origin}/accept-invite?error=invalid_link`);
+  // 파라미터 자체가 없는 경우 — URL에 어떤 파라미터가 왔는지 표시
+  const allParams = searchParams.toString();
+  return NextResponse.redirect(
+    `${origin}/accept-invite?error=${encodeURIComponent("no_params: " + allParams)}`,
+  );
 }

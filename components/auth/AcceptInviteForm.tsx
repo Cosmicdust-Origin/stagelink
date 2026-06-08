@@ -28,7 +28,7 @@ export function AcceptInviteForm() {
   useEffect(() => {
     const error = searchParams.get("error");
     if (error) {
-      setVerifyError("초대 링크가 만료되었거나 이미 사용된 링크입니다. 관리자에게 재초대를 요청해주세요.");
+      setVerifyError(`[디버그] ${error}`);
       setStatus("error");
       return;
     }
