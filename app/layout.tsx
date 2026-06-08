@@ -14,7 +14,20 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "STAGELINK",
-  description: "초대 기반 지하돌 운영 통합 정산관리 시스템",
+  description: "지하돌 특전 관리, 통합 정산 시스템",
+  metadataBase: new URL("https://stageoftheground.vercel.app"),
+  openGraph: {
+    title: "STAGELINK",
+    description: "지하돌 특전 관리, 통합 정산 시스템",
+    siteName: "STAGELINK",
+    locale: "ko_KR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "STAGELINK",
+    description: "지하돌 특전 관리, 통합 정산 시스템",
+  },
 };
 
 export default function RootLayout({

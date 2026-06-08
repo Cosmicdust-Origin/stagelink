@@ -71,7 +71,7 @@ export function WorkspaceSettingsForm({ initialName, initialTagline, canEdit }: 
           {isSaving ? "저장 중" : "저장"}
         </button>
       ) : (
-        <p className="text-sm text-zinc-500">관리자만 워크스페이스 설정을 수정할 수 있어.</p>
+        <p className="text-sm text-zinc-500">관리자만 워크스페이스 설정을 수정할 수 있습니다.</p>
       )}
     </form>
   );

@@ -36,11 +36,12 @@ export function WorkspaceCreateForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <input
         className="h-12 w-full rounded-lg border border-white/10 bg-white/[0.04] px-4 text-white placeholder-zinc-500 focus:border-[#E8457A] focus:outline-none"
-        placeholder="예: 너에게 닿기를"
+        placeholder="예: 키즈나 시뮬레이션"
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
       />
+      <p className="text-xs text-zinc-500">워크스페이스 이름은 설정에서 변경 가능합니다.</p>
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
       <button
         type="submit"
