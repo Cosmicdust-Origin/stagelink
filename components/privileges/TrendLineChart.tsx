@@ -1,6 +1,7 @@
 "use client";
 
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useState } from "react";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 type TrendLineChartProps = {
   title: string;
@@ -8,10 +9,28 @@ type TrendLineChartProps = {
   data: Array<Record<string, string | number>>;
 };
 
-const colors = ["#E8457A", "#4A9FE8", "#27AE60", "#F5B642", "#9B59B6"];
+const colors = [
+  "#E8457A",
+  "#4A9FE8",
+  "#27AE60",
+  "#F5B642",
+  "#9B59B6",
+  "#06B6D4",
+  "#F97316",
+  "#84CC16",
+  "#EC4899",
+  "#38BDF8",
+  "#A3E635",
+  "#F43F5E",
+];
 
 export function TrendLineChart({ title, description, data }: TrendLineChartProps) {
-  const keys = Object.keys(data[0] ?? {}).filter((k) => k !== "date");
+  const keys = Object.keys(data[0] ?? {}).filter((key) => key !== "date");
+  const [focusedKey, setFocusedKey] = useState<string | null>(null);
+
+  function getOpacity(key: string) {
+    return focusedKey && focusedKey !== key ? 0.16 : 1;
+  }
 
   return (
     <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
@@ -27,22 +46,47 @@ export function TrendLineChart({ title, description, data }: TrendLineChartProps
               contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", color: "#fff", fontSize: 13 }}
               formatter={(value, name) => [`${value}장`, name]}
             />
-            <Legend
-              wrapperStyle={{ fontSize: 12, color: "#a1a1aa", paddingTop: 8 }}
-            />
-            {keys.map((key, index) => (
-              <Line
-                key={key}
-                type="monotone"
-                dataKey={key}
-                stroke={colors[index % colors.length]}
-                strokeWidth={2}
-                dot={{ r: 3, fill: colors[index % colors.length] }}
-                activeDot={{ r: 5 }}
-              />
-            ))}
+            {keys.map((key, index) => {
+              const color = colors[index % colors.length];
+              const isFocused = focusedKey === key;
+              const opacity = getOpacity(key);
+
+              return (
+                <Line
+                  key={key}
+                  type="monotone"
+                  dataKey={key}
+                  stroke={color}
+                  strokeOpacity={opacity}
+                  strokeWidth={isFocused ? 4 : 2}
+                  dot={{ r: isFocused ? 4 : 3, fill: color, opacity }}
+                  activeDot={{ r: isFocused ? 7 : 5 }}
+                />
+              );
+            })}
           </LineChart>
         </ResponsiveContainer>
+      </div>
+      <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-2 text-xs">
+        {keys.map((key, index) => {
+          const color = colors[index % colors.length];
+          const isFocused = focusedKey === key;
+          const isDimmed = focusedKey !== null && !isFocused;
+
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFocusedKey((current) => (current === key ? null : key))}
+              className={`inline-flex items-center gap-1.5 transition-opacity ${
+                isDimmed ? "opacity-35" : "opacity-100"
+              } ${isFocused ? "font-semibold text-white" : "text-zinc-400 hover:text-zinc-200"}`}
+            >
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+              {key}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
