@@ -31,8 +31,7 @@ export function normalizeRole(role?: string | null): UserRole | undefined {
 }
 
 export function canAccessMembers(role?: string | null) {
-  const normalized = normalizeRole(role);
-  return normalized === "super_admin" || normalized === "admin";
+  return normalizeRole(role) === "admin";
 }
 
 export function canAccessSettlement(role?: string | null) {

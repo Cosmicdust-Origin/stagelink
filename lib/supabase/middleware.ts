@@ -52,8 +52,13 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && isAuthPage) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/dashboard";
+    redirectUrl.pathname = profile?.role === "super_admin" ? "/master" : "/dashboard";
     return NextResponse.redirect(redirectUrl);
   }
 

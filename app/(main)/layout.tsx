@@ -20,6 +20,9 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   if (user && profile) {
     const wsId = await getWorkspaceId(supabase, user.id);
     if (!wsId) {
+      if (profile.role === "super_admin") {
+        redirect("/master");
+      }
       if (profile.role === "admin") {
         redirect("/workspace/new");
       }

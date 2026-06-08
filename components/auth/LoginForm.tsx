@@ -19,15 +19,13 @@ export function LoginForm() {
     setIsLoading(true);
 
     const supabase = createClient();
-
-    // username → email 조회 (보안 정의 RPC, 비로그인 상태에서 호출 가능)
     const { data: email, error: rpcError } = await supabase.rpc("get_email_by_username", {
       p_username: username.trim(),
     });
 
     if (rpcError || !email) {
       setIsLoading(false);
-      setError("아이디 또는 비밀번호를 확인해주세요.");
+      setError("아이디 또는 비밀번호를 확인해줘.");
       return;
     }
 
@@ -36,14 +34,23 @@ export function LoginForm() {
       password,
     });
 
-    setIsLoading(false);
-
     if (signInError) {
-      setError("아이디 또는 비밀번호를 확인해주세요.");
+      setIsLoading(false);
+      setError("아이디 또는 비밀번호를 확인해줘.");
       return;
     }
 
-    router.replace(searchParams.get("next") || "/dashboard");
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("email", email as string)
+      .single();
+
+    setIsLoading(false);
+
+    router.replace(
+      searchParams.get("next") || (profile?.role === "super_admin" ? "/master" : "/dashboard"),
+    );
     router.refresh();
   }
 
@@ -55,7 +62,7 @@ export function LoginForm() {
           className="mt-2 h-11 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white"
           type="text"
           autoComplete="username"
-          placeholder="Admin"
+          placeholder="admin"
           value={username}
           onChange={(event) => setUsername(event.target.value)}
           required
