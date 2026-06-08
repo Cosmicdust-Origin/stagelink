@@ -59,6 +59,7 @@ export function TrendLineChart({ title, description, data }: TrendLineChartProps
                   stroke={color}
                   strokeOpacity={opacity}
                   strokeWidth={isFocused ? 4 : 2}
+                  connectNulls
                   dot={{ r: isFocused ? 4 : 3, fill: color, opacity }}
                   activeDot={{ r: isFocused ? 7 : 5 }}
                 />
