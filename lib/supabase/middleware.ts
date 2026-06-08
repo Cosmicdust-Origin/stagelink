@@ -51,17 +51,6 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && isAuthPage) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = profile?.role === "super_admin" ? "/master" : "/dashboard";
-    return NextResponse.redirect(redirectUrl);
-  }
-
   if (
     user &&
     (pathname.startsWith("/members") || pathname.startsWith("/settlement") || pathname.startsWith("/master"))
