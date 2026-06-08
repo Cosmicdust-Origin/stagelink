@@ -45,7 +45,7 @@ export async function PUT(request: Request, { params }: Params) {
   try {
     const { eventId } = await params;
     requireUuid(eventId, "eventId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const body = await parseJson<Record<string, unknown>>(request);
 
     const { data: event, error: eventError } = await supabase
@@ -114,7 +114,7 @@ export async function DELETE(_: Request, { params }: Params) {
   try {
     const { eventId } = await params;
     requireUuid(eventId, "eventId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const { error } = await supabase
       .from("events")
       .delete()

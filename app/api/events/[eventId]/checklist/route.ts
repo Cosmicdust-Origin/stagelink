@@ -33,7 +33,7 @@ export async function POST(request: Request, { params }: Params) {
   try {
     const { eventId } = await params;
     requireUuid(eventId, "eventId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const body = await parseJson<{ label: string; sort_order?: number }>(request);
     if (!body.label?.trim()) throw new ApiError(400, "Missing checklist label");
     const sortOrder =

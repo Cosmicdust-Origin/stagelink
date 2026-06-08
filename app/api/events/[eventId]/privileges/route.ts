@@ -14,7 +14,7 @@ export async function GET(_: Request, { params }: Params) {
   try {
     const { eventId } = await params;
     requireUuid(eventId, "eventId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const { data: event } = await supabase
       .from("events")
       .select("id")
@@ -39,7 +39,7 @@ export async function POST(request: Request, { params }: Params) {
   try {
     const { eventId } = await params;
     requireUuid(eventId, "eventId");
-    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const body = await parseJson<Body>(request);
     if (!Array.isArray(body.records)) throw new ApiError(400, "Invalid records");
     body.records = body.records.map((record) => ({

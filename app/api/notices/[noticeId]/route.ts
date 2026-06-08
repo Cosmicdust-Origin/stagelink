@@ -34,7 +34,7 @@ export async function PUT(request: Request, { params }: Params) {
   try {
     const { noticeId } = await params;
     requireUuid(noticeId, "noticeId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const body = await parseJson<Record<string, unknown>>(request);
     const payload = pickAllowed(body, noticeUpdateFields);
     if (payload.target_group_id !== undefined) payload.target_group_id = optionalUuid(payload.target_group_id, "target_group_id") ?? null;
@@ -57,7 +57,7 @@ export async function DELETE(_: Request, { params }: Params) {
   try {
     const { noticeId } = await params;
     requireUuid(noticeId, "noticeId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const { error } = await supabase
       .from("notices")
       .delete()

@@ -9,7 +9,7 @@ export async function PATCH(request: Request, { params }: Params) {
   try {
     const { recordId } = await params;
     requireUuid(recordId, "recordId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const body = await parseJson<PatchBody>(request);
     const { data: record } = await supabase
       .from("privilege_records")
@@ -50,7 +50,7 @@ export async function DELETE(_: Request, { params }: Params) {
   try {
     const { recordId } = await params;
     requireUuid(recordId, "recordId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const { data: record } = await supabase
       .from("privilege_records")
       .select("id, events!inner(workspace_id)")

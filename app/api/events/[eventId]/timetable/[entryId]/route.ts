@@ -21,7 +21,7 @@ export async function PUT(request: Request, { params }: Params) {
   try {
     const { entryId } = await params;
     requireUuid(entryId, "entryId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const body = await parseJson<Record<string, unknown>>(request);
     const payload = pickAllowed(body, timetableUpdateFields);
     if ("group_id" in payload) payload.group_id = optionalUuid(payload.group_id, "group_id") ?? null;
@@ -54,7 +54,7 @@ export async function DELETE(_: Request, { params }: Params) {
   try {
     const { entryId } = await params;
     requireUuid(entryId, "entryId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const { data: entry } = await supabase
       .from("timetable_entries")
       .select("id, events!inner(workspace_id)")

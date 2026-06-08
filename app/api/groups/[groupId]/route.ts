@@ -40,7 +40,7 @@ export async function PUT(request: Request, { params }: Params) {
   try {
     const { groupId } = await params;
     requireUuid(groupId, "groupId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const body = await parseJson<Record<string, unknown>>(request);
     const payload = pickAllowed(body, groupUpdateFields);
     if (payload.debut_date !== undefined) payload.debut_date = optionalDateString(payload.debut_date, "debut_date") ?? null;
@@ -66,7 +66,7 @@ export async function DELETE(_: Request, { params }: Params) {
   try {
     const { groupId } = await params;
     requireUuid(groupId, "groupId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const { error } = await supabase
       .from("groups")
       .delete()

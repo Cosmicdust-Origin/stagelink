@@ -8,7 +8,7 @@ export async function PUT(request: Request, { params }: Params) {
   try {
     const { taskId } = await params;
     requireUuid(taskId, "taskId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const body = await parseJson<{ status: "todo" | "in_progress" | "done" }>(request);
     if (!taskStatuses.has(body.status)) throw new ApiError(400, "Invalid status");
     const { data, error } = await supabase

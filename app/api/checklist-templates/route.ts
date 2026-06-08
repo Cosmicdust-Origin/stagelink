@@ -2,7 +2,7 @@ import { ApiError, handleApiError, json, parseJson, requireRoleWithWorkspace } f
 
 export async function GET() {
   try {
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
 
     const { data, error } = await supabase
       .from("checklist_templates")
@@ -19,7 +19,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const body = await parseJson<{ label: string; is_default?: boolean }>(request);
     const label = body.label?.trim();
     if (!label) throw new ApiError(400, "Missing checklist template label");

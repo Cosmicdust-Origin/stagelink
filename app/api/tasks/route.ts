@@ -20,7 +20,7 @@ const taskStatuses = new Set(["todo", "in_progress", "done"]);
 
 export async function GET(request: Request) {
   try {
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
 
     const { searchParams } = new URL(request.url);
 
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
 
     const body = await parseJson<Record<string, unknown>>(request);
     const payload = pickAllowed(body, taskCreateFields);

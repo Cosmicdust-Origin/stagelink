@@ -33,7 +33,7 @@ export async function POST(request: Request, { params }: Params) {
   try {
     const { eventId } = await params;
     requireUuid(eventId, "eventId");
-    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
     const body = await parseJson<Record<string, unknown>>(request);
     const payload = {
       start_time: body.start_time,

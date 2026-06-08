@@ -65,7 +65,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "manager"]);
+    const { supabase, user, workspaceId } = await requireRoleWithWorkspace(["admin", "owner", "manager"]);
 
     const body = await parseJson<EventBody>(request);
     const { checklist_template_ids: checklistTemplateIds, group_ids: groupIds } = body;
