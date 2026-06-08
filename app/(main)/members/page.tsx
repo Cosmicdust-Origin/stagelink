@@ -1,4 +1,5 @@
 import { ShieldCheck, UserCog } from "lucide-react";
+import { MemberWithdrawButton } from "@/components/members/MemberWithdrawButton";
 import { normalizeRole, roleBadgeClasses, roleLabels } from "@/lib/rbac";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getWorkspaceId } from "@/lib/workspace";
@@ -73,6 +74,7 @@ export default async function MembersPage() {
               <th className="px-4 py-3 text-left font-medium text-zinc-400">이메일</th>
               <th className="px-4 py-3 text-left font-medium text-zinc-400">등급</th>
               <th className="px-4 py-3 text-left font-medium text-zinc-400">가입일</th>
+              <th className="px-4 py-3 text-right font-medium text-zinc-400">관리</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -112,12 +114,18 @@ export default async function MembersPage() {
                       ? new Date(authUser.created_at).toLocaleDateString("ko-KR")
                       : "-"}
                   </td>
+                  <td className="px-4 py-3 text-right">
+                    <MemberWithdrawButton
+                      memberId={authUser.id}
+                      memberName={profile?.name ?? authUser.email ?? "이 회원"}
+                    />
+                  </td>
                 </tr>
               );
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
                   이 워크스페이스에 초대된 계정이 없습니다.
                 </td>
               </tr>

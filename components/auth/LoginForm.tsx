@@ -25,7 +25,7 @@ export function LoginForm() {
 
     if (rpcError || !email) {
       setIsLoading(false);
-      setError("아이디 또는 비밀번호를 확인해줘.");
+      setError("아이디 또는 패스워드가 올바르게 입력되었는지 확인해주세요.");
       return;
     }
 
@@ -36,7 +36,7 @@ export function LoginForm() {
 
     if (signInError) {
       setIsLoading(false);
-      setError("아이디 또는 비밀번호를 확인해줘.");
+      setError("아이디 또는 패스워드가 올바르게 입력되었는지 확인해주세요.");
       return;
     }
 
