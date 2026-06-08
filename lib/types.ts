@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "owner" | "staff" | "manager";
+export type UserRole = "super_admin" | "admin" | "owner" | "staff" | "manager";
 export type EventType = "live" | "rehearsal" | "filming" | "meeting" | "other";
 export type PrivilegeCategory = "on_site" | "event" | "mail_order" | "goods" | "other";
 export type TaskStatus = "todo" | "in_progress" | "done";

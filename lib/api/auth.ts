@@ -63,6 +63,7 @@ export async function requireRole(roles: UserRole[]) {
   const role = normalizeRole(context.profile.role);
 
   const allowed = roles.some((requiredRole) => {
+    if (role === "super_admin") return true;
     if (requiredRole === "manager") return Boolean(role);
     return role === requiredRole;
   });

@@ -9,6 +9,7 @@ import {
   CircleDollarSign,
   ClipboardList,
   LayoutDashboard,
+  KeyRound,
   LogOut,
   Megaphone,
   Settings,
@@ -32,6 +33,7 @@ const icons: Record<string, React.ElementType> = {
   "/members": ShieldCheck,
   "/settings": Settings,
   "/account": UserCircle,
+  "/master": KeyRound,
 };
 
 export function Sidebar({ role }: { role?: UserRole }) {

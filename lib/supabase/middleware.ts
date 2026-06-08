@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { canAccessMembers, canAccessSettlement } from "@/lib/rbac";
+import { canAccessMaster, canAccessMembers, canAccessSettlement } from "@/lib/rbac";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -57,7 +57,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && (pathname.startsWith("/members") || pathname.startsWith("/settlement"))) {
+  if (
+    user &&
+    (pathname.startsWith("/members") || pathname.startsWith("/settlement") || pathname.startsWith("/master"))
+  ) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
@@ -66,7 +69,8 @@ export async function updateSession(request: NextRequest) {
 
     const denied =
       (pathname.startsWith("/members") && !canAccessMembers(profile?.role)) ||
-      (pathname.startsWith("/settlement") && !canAccessSettlement(profile?.role));
+      (pathname.startsWith("/settlement") && !canAccessSettlement(profile?.role)) ||
+      (pathname.startsWith("/master") && !canAccessMaster(profile?.role));
 
     if (denied) {
       const redirectUrl = request.nextUrl.clone();

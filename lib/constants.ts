@@ -1,5 +1,5 @@
-import type { EventType, TaskStatus } from "@/lib/types";
 import type { NavAccess } from "@/lib/rbac";
+import type { EventType, TaskStatus } from "@/lib/types";
 
 export const eventTypeLabels: Record<EventType, string> = {
   live: "라이브",
@@ -34,4 +34,5 @@ export const navItems = [
   { href: "/members", label: "회원 관리", access: "members" },
   { href: "/settings", label: "설정" },
   { href: "/account", label: "마이페이지" },
+  { href: "/master", label: "마스터", access: "master" },
 ] satisfies ReadonlyArray<{ href: string; label: string; access?: NavAccess }>;

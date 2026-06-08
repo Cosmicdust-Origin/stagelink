@@ -15,6 +15,34 @@ export async function getWorkspaceId(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<string | null> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const cookieStore = await cookies();
+  const preferred = cookieStore.get(WORKSPACE_COOKIE)?.value;
+
+  if (profile?.role === "super_admin") {
+    if (preferred) {
+      const { data: workspace } = await supabase
+        .from("workspaces")
+        .select("id")
+        .eq("id", preferred)
+        .maybeSingle();
+      if (workspace) return workspace.id;
+    }
+
+    const { data: firstWorkspace } = await supabase
+      .from("workspaces")
+      .select("id")
+      .order("created_at")
+      .limit(1)
+      .maybeSingle();
+    return firstWorkspace?.id ?? null;
+  }
+
   // Admin: owns a workspace
   const { data: ownWs } = await supabase
     .from("workspaces")
@@ -24,9 +52,6 @@ export async function getWorkspaceId(
   if (ownWs) return ownWs.id;
 
   // Staff/manager: check cookie preference first
-  const cookieStore = await cookies();
-  const preferred = cookieStore.get(WORKSPACE_COOKIE)?.value;
-
   if (preferred) {
     const { data: m } = await supabase
       .from("workspace_members")
@@ -68,6 +93,20 @@ export async function getUserWorkspaces(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<Array<{ id: string; name: string }>> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profile?.role === "super_admin") {
+    const { data } = await supabase
+      .from("workspaces")
+      .select("id,name")
+      .order("created_at");
+    return data ?? [];
+  }
+
   const [{ data: owned }, { data: memberships }] = await Promise.all([
     supabase.from("workspaces").select("id,name").eq("owner_id", userId),
     supabase

@@ -9,6 +9,7 @@ import {
   CircleDollarSign,
   ClipboardList,
   LayoutDashboard,
+  KeyRound,
   LogOut,
   Megaphone,
   Menu,
@@ -34,6 +35,7 @@ const icons: Record<string, React.ElementType> = {
   "/members": ShieldCheck,
   "/settings": Settings,
   "/account": UserCircle,
+  "/master": KeyRound,
 };
 
 const bottomTabs = ["/dashboard", "/calendar", "/tasks", "/notice"];
