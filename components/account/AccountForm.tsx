@@ -22,7 +22,6 @@ export function AccountForm({ profile }: { profile: Profile }) {
   const toast = useToastStore((s) => s.show);
 
   const [name, setName] = useState(profile.name);
-  const [username, setUsername] = useState(profile.username);
   const [phone, setPhone] = useState(profile.phone ?? "");
 
   // Password change
@@ -42,7 +41,7 @@ export function AccountForm({ profile }: { profile: Profile }) {
     const res = await fetch("/api/account", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), username: username.trim(), phone: phone.trim() || null }),
+      body: JSON.stringify({ name: name.trim(), phone: phone.trim() || null }),
     });
 
     setSavingProfile(false);
@@ -125,17 +124,12 @@ export function AccountForm({ profile }: { profile: Profile }) {
               required
             />
           </label>
-          <label className="block text-sm text-zinc-300">
+          <div className="text-sm text-zinc-300">
             아이디
-            <input
-              className="mt-2 h-10 w-full rounded-md border border-white/10 bg-[#101114] px-3 text-white placeholder-zinc-600"
-              autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="영문 소문자·숫자·밑줄, 3~20자"
-              required
-            />
-          </label>
+            <p className="mt-2 flex h-10 items-center rounded-md border border-white/10 bg-white/[0.02] px-3 text-zinc-500 select-all">
+              {profile.username || <span className="text-zinc-600">미설정</span>}
+            </p>
+          </div>
           <label className="block text-sm text-zinc-300">
             연락처
             <input
