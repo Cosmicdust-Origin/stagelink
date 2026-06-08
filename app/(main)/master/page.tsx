@@ -21,15 +21,10 @@ type ProfileRow = {
 
 type AuditRow = {
   id: string;
+  actor_id: string;
   action: string;
   target_workspace_id: string | null;
-  metadata: Record<string, unknown> | null;
   created_at: string;
-  profiles:
-    | { name: string; username: string | null; email: string | null }
-    | Array<{ name: string; username: string | null; email: string | null }>
-    | null;
-  workspaces: { name: string } | Array<{ name: string }> | null;
 };
 
 export default async function MasterPage() {
@@ -51,7 +46,11 @@ export default async function MasterPage() {
   const service = createServiceRoleClient();
   const currentWorkspaceId = await getWorkspaceId(supabase, user.id);
 
-  const [{ data: workspaces }, { data: profiles }, { data: auditLogs }] = await Promise.all([
+  const [
+    { data: workspaces, error: workspacesError },
+    { data: profiles, error: profilesError },
+    { data: auditLogs, error: auditLogsError },
+  ] = await Promise.all([
     service
       .from("workspaces")
       .select("id,name,tagline,owner_id,created_at")
@@ -59,12 +58,15 @@ export default async function MasterPage() {
     service.from("profiles").select("id,email,username,name,role"),
     service
       .from("master_audit_logs")
-      .select("id,action,target_workspace_id,metadata,created_at,profiles!master_audit_logs_actor_id_fkey(name,username,email),workspaces(name)")
+      .select("id,actor_id,action,target_workspace_id,created_at")
       .order("created_at", { ascending: false })
       .limit(20),
   ]);
 
-  const profileById = new Map((profiles as ProfileRow[] | null ?? []).map((item) => [item.id, item]));
+  const accessError = workspacesError ?? profilesError ?? auditLogsError;
+  const profileById = new Map(((profiles ?? []) as ProfileRow[]).map((item) => [item.id, item]));
+  const workspaceById = new Map(((workspaces ?? []) as WorkspaceRow[]).map((item) => [item.id, item]));
+
   const rows = await Promise.all(
     ((workspaces ?? []) as WorkspaceRow[]).map(async (workspace) => {
       const [members, groups, events, rates] = await Promise.all([
@@ -81,11 +83,6 @@ export default async function MasterPage() {
       };
     }),
   );
-  const masterLogs = ((auditLogs ?? []) as unknown as AuditRow[]).map((log) => ({
-    ...log,
-    profile: firstRelation(log.profiles),
-    workspace: firstRelation(log.workspaces),
-  }));
 
   return (
     <div className="space-y-6">
@@ -93,9 +90,15 @@ export default async function MasterPage() {
         <p className="text-sm text-sky-300">서비스 마스터</p>
         <h1 className="text-2xl font-semibold text-white">슈퍼어드민 콘솔</h1>
         <p className="mt-2 text-sm text-zinc-400">
-          비상 상황에서 전체 워크스페이스를 확인하고 관장 대상을 전환합니다.
+          전체 워크스페이스 상태를 확인하고 비상 관장 대상을 전환합니다.
         </p>
       </div>
+
+      {accessError ? (
+        <section className="border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+          마스터 데이터를 불러오지 못했어. {accessError.message}
+        </section>
+      ) : null}
 
       <section className="grid gap-3 md:grid-cols-4">
         <Metric label="전체 워크스페이스" value={rows.length} />
@@ -106,7 +109,7 @@ export default async function MasterPage() {
 
       <section className="rounded-lg border border-white/10 bg-white/[0.04]">
         <div className="border-b border-white/10 px-4 py-3">
-          <h2 className="font-semibold text-white">워크스페이스 관장</h2>
+          <h2 className="font-semibold text-white">워크스페이스 관리</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[840px] text-left text-sm">
@@ -144,6 +147,13 @@ export default async function MasterPage() {
                   </td>
                 </tr>
               ))}
+              {rows.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-8 text-center text-zinc-500" colSpan={7}>
+                    등록된 워크스페이스가 없습니다.
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
@@ -152,13 +162,19 @@ export default async function MasterPage() {
       <section className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
         <h2 className="font-semibold text-white">최근 마스터 감사 로그</h2>
         <div className="mt-4 space-y-3">
-          {masterLogs.length ? (
-            masterLogs.map((log) => (
-              <div key={log.id} className="flex items-center justify-between gap-4 border-t border-white/10 pt-3 text-sm">
+          {((auditLogs ?? []) as AuditRow[]).length ? (
+            ((auditLogs ?? []) as AuditRow[]).map((log) => (
+              <div
+                key={log.id}
+                className="flex items-center justify-between gap-4 border-t border-white/10 pt-3 text-sm"
+              >
                 <div>
                   <p className="text-zinc-200">{log.action}</p>
                   <p className="text-xs text-zinc-500">
-                    {log.profile?.name ?? "알 수 없음"} · {log.workspace?.name ?? "대상 없음"}
+                    {profileById.get(log.actor_id)?.name ?? "알 수 없음"} ·{" "}
+                    {log.target_workspace_id
+                      ? workspaceById.get(log.target_workspace_id)?.name ?? "삭제된 워크스페이스"
+                      : "대상 없음"}
                   </p>
                 </div>
                 <time className="text-xs text-zinc-500">
@@ -193,11 +209,7 @@ async function countByWorkspace(
     .from(table)
     .select("id", { count: "exact", head: true })
     .eq("workspace_id", workspaceId);
+
   if (error) return 0;
   return count ?? 0;
-}
-
-function firstRelation<T>(relation: T | T[] | null | undefined) {
-  if (Array.isArray(relation)) return relation[0] ?? null;
-  return relation ?? null;
 }

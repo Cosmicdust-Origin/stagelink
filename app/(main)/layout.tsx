@@ -16,17 +16,14 @@ export default async function MainLayout({ children }: { children: React.ReactNo
     ? await supabase.from("profiles").select("role").eq("id", user.id).single()
     : { data: null };
 
-  // Workspace check
-  if (user && profile) {
+  // Service masters are global operators and can use /master without a bound workspace.
+  if (user && profile && profile.role !== "super_admin") {
     const wsId = await getWorkspaceId(supabase, user.id);
     if (!wsId) {
-      if (profile.role === "super_admin") {
-        redirect("/master");
-      }
       if (profile.role === "admin") {
         redirect("/workspace/new");
       }
-      // 매니저인데 아직 워크스페이스 미소속
+
       return (
         <div className="flex min-h-screen items-center justify-center bg-[#101114] px-6">
           <div className="text-center">
