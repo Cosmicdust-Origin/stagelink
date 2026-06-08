@@ -1,4 +1,4 @@
-import { handleApiError, json, parseJson, requireRole, requireUser } from "@/lib/api/auth";
+import { ApiError, handleApiError, json, parseJson, requireRole, requireRoleWithWorkspace, requireUser } from "@/lib/api/auth";
 import { getWorkspaceId, getUserWorkspaces } from "@/lib/workspace";
 
 export async function GET() {
@@ -47,6 +47,29 @@ export async function POST(request: Request) {
     ]);
 
     return json({ workspace }, 201);
+  } catch (err) {
+    return handleApiError(err);
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const { supabase, workspaceId } = await requireRoleWithWorkspace(["admin"]);
+    const body = await parseJson<{ name?: string; tagline?: string }>(request);
+    const name = body.name?.trim();
+    const tagline = body.tagline?.trim() || "오늘도 무대 뒤를 단단하게";
+
+    if (!name) throw new ApiError(400, "워크스페이스명을 입력하세요.");
+
+    const { data, error } = await supabase
+      .from("workspaces")
+      .update({ name, tagline })
+      .eq("id", workspaceId)
+      .select("id,name,tagline")
+      .single();
+
+    if (error) throw error;
+    return json({ workspace: data });
   } catch (err) {
     return handleApiError(err);
   }
