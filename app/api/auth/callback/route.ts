@@ -10,7 +10,17 @@ import { NextResponse } from "next/server";
  * cookies().set()이 실제 Set-Cookie 헤더로 내려가므로 다음 요청부터 세션이 확실히 적용된다.
  */
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const requestUrl = new URL(request.url);
+  const searchParams = requestUrl.searchParams;
+
+  // Vercel은 내부적으로 다른 hostname을 사용하므로 request.url의 origin이 틀릴 수 있다.
+  // X-Forwarded-Host 헤더 또는 환경변수로 실제 origin을 결정한다.
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto") ?? "https";
+  const origin =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (forwardedHost ? `${forwardedProto}://${forwardedHost}` : requestUrl.origin);
+
   const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type");
