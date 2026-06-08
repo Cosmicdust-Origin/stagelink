@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
     const { error } = await supabase.auth.admin.inviteUserByEmail(body.email, {
       data: { role: body.role, name: body.name, workspace_id: wsId },
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/auth/callback?next=/accept-invite`,
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/accept-invite`,
     });
 
     if (error) {
