@@ -1,18 +1,18 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Status = "verifying" | "form" | "error";
 
 export function AcceptInviteForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [status, setStatus] = useState<Status>("verifying");
   const [verifyError, setVerifyError] = useState("");
+  const [invitedEmail, setInvitedEmail] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -36,6 +36,8 @@ export function AcceptInviteForm() {
           setStatus("error");
           return;
         }
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (u?.email) setInvitedEmail(u.email);
         setStatus("form");
         return;
       }
@@ -49,16 +51,19 @@ export function AcceptInviteForm() {
           setStatus("error");
           return;
         }
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (u?.email) setInvitedEmail(u.email);
         setStatus("form");
         return;
       }
 
-      // ── 방식 3: implicit (URL 해시에 access_token) ────────────
+      // ── 방식 3: implicit (URL 해시에 access_token + type=invite) ────────────
       const hash = typeof window !== "undefined" ? window.location.hash : "";
       if (hash.includes("access_token") && hash.includes("type=invite")) {
         // Supabase 클라이언트가 해시를 자동으로 파싱해서 세션을 수립함
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (u?.email) {
+          setInvitedEmail(u.email);
           setStatus("form");
           return;
         }
@@ -107,8 +112,8 @@ export function AcceptInviteForm() {
       return;
     }
 
-    router.push("/dashboard");
-    router.refresh();
+    // hard redirect: Next.js 서버 컴포넌트가 캐시된 세션 대신 새 쿠키를 읽도록 강제
+    window.location.replace("/dashboard");
   }
 
   if (status === "verifying") {
@@ -130,6 +135,12 @@ export function AcceptInviteForm() {
 
   return (
     <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+      {invitedEmail ? (
+        <div className="rounded-md bg-white/5 border border-white/10 px-4 py-3 text-sm">
+          <p className="text-zinc-400">초대받은 계정</p>
+          <p className="mt-0.5 font-medium text-white">{invitedEmail}</p>
+        </div>
+      ) : null}
       <label className="block text-sm text-zinc-300">
         이름
         <input
