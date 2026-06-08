@@ -21,60 +21,33 @@ export function AcceptInviteForm() {
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Exchange invite token for session on mount
+  // 세션 확인:
+  // /api/auth/callback 에서 서버 사이드로 코드 교환이 완료된 뒤 이 페이지로 리다이렉트됨.
+  // 이미 세션 쿠키가 Set-Cookie 헤더로 브라우저에 저장되어 있으므로
+  // getUser()만 호출하면 됨.
   useEffect(() => {
-    async function verify() {
-      const supabase = createClient();
-
-      // ── 방식 1: token_hash (Supabase email OTP 방식) ──────────
-      const token_hash = searchParams.get("token_hash");
-      const type = searchParams.get("type");
-      if (token_hash && type === "invite") {
-        const { error } = await supabase.auth.verifyOtp({ token_hash, type: "invite" });
-        if (error) {
-          setVerifyError("초대 링크가 만료되었거나 이미 사용된 링크입니다. 관리자에게 재초대를 요청해주세요.");
-          setStatus("error");
-          return;
-        }
-        const { data: { user: u } } = await supabase.auth.getUser();
-        if (u?.email) setInvitedEmail(u.email);
-        setStatus("form");
-        return;
-      }
-
-      // ── 방식 2: code (PKCE 방식, 현재 Supabase 기본값) ─────────
-      const code = searchParams.get("code");
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (error) {
-          setVerifyError("초대 링크가 만료되었거나 이미 사용된 링크입니다. 관리자에게 재초대를 요청해주세요.");
-          setStatus("error");
-          return;
-        }
-        const { data: { user: u } } = await supabase.auth.getUser();
-        if (u?.email) setInvitedEmail(u.email);
-        setStatus("form");
-        return;
-      }
-
-      // ── 방식 3: implicit (URL 해시에 access_token + type=invite) ────────────
-      const hash = typeof window !== "undefined" ? window.location.hash : "";
-      if (hash.includes("access_token") && hash.includes("type=invite")) {
-        // Supabase 클라이언트가 해시를 자동으로 파싱해서 세션을 수립함
-        const { data: { user: u } } = await supabase.auth.getUser();
-        if (u?.email) {
-          setInvitedEmail(u.email);
-          setStatus("form");
-          return;
-        }
-      }
-
-      // 어떤 방식도 해당하지 않으면 잘못된 링크
-      setVerifyError("유효하지 않은 초대 링크입니다. 이메일의 링크를 다시 확인해주세요.");
+    const error = searchParams.get("error");
+    if (error) {
+      setVerifyError("초대 링크가 만료되었거나 이미 사용된 링크입니다. 관리자에게 재초대를 요청해주세요.");
       setStatus("error");
+      return;
     }
 
-    verify();
+    async function checkSession() {
+      const supabase = createClient();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        setVerifyError("유효하지 않은 초대 링크입니다. 이메일의 링크를 다시 확인해주세요.");
+        setStatus("error");
+        return;
+      }
+
+      setInvitedEmail(user.email ?? null);
+      setStatus("form");
+    }
+
+    checkSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -112,7 +85,7 @@ export function AcceptInviteForm() {
       return;
     }
 
-    // hard redirect: Next.js 서버 컴포넌트가 캐시된 세션 대신 새 쿠키를 읽도록 강제
+    // hard redirect: 서버 컴포넌트가 새 쿠키(직원 세션)를 확실히 읽도록 강제
     window.location.replace("/dashboard");
   }
 
