@@ -30,14 +30,22 @@ export function AcceptInviteForm() {
       const supabase = createClient();
 
       // ── 방식 1: URL hash (Supabase implicit flow — inviteUserByEmail 기본 동작) ──
-      // hash fragment는 서버로 전달되지 않으므로 클라이언트에서만 처리 가능
+      // hash fragment는 서버로 전달되지 않으므로 클라이언트에서만 처리 가능.
+      // 기존 세션(관리자 등)이 있어도 hash의 토큰으로 강제 교체해야 함.
       const hash = typeof window !== "undefined" ? window.location.hash : "";
       if (hash.includes("access_token")) {
-        // auth-js가 hash를 파싱해서 세션을 설정하도록 getSession() 명시적 호출
-        await supabase.auth.getSession();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.email) {
-          setInvitedEmail(user.email);
+        const params = new URLSearchParams(hash.substring(1));
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token") ?? "";
+        if (access_token) {
+          const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+          if (error) {
+            setVerifyError("초대 링크가 만료되었거나 이미 사용된 링크입니다. 관리자에게 재초대를 요청해주세요.");
+            setStatus("error");
+            return;
+          }
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.email) setInvitedEmail(user.email);
           setStatus("form");
           return;
         }
