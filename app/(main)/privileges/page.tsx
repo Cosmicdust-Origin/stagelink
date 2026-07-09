@@ -194,7 +194,7 @@ export default async function PrivilegesPage({ searchParams }: Props) {
   const dailyMap = new Map<string, Record<string, string | number>>();
   for (const record of records) {
     const day = record.event_date.slice(5, 10);
-    const row = dailyMap.get(day) ?? { date: day };
+    const row = dailyMap.get(day) ?? { date: day, ...Object.fromEntries(memberNames.map((member) => [member, 0])) };
     row[record.member_name] = Number(row[record.member_name] ?? 0) + record.quantity;
     dailyMap.set(day, row);
   }
@@ -254,6 +254,7 @@ export default async function PrivilegesPage({ searchParams }: Props) {
             <TrendLineChart
               title={`${monthLabel} 공연별 특전 수량 추이`}
               description="공연 날짜 기준 · 멤버별 합산"
+              keys={memberNames}
               data={
                 trendData.length
                   ? trendData

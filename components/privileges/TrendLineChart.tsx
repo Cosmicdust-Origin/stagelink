@@ -7,6 +7,7 @@ type TrendLineChartProps = {
   title: string;
   description?: string;
   data: Array<Record<string, string | number>>;
+  keys?: string[];
 };
 
 const colors = [
@@ -24,8 +25,10 @@ const colors = [
   "#F43F5E",
 ];
 
-export function TrendLineChart({ title, description, data }: TrendLineChartProps) {
-  const keys = Object.keys(data[0] ?? {}).filter((key) => key !== "date");
+export function TrendLineChart({ title, description, data, keys: explicitKeys }: TrendLineChartProps) {
+  const keys = explicitKeys?.length
+    ? explicitKeys
+    : Object.keys(data[0] ?? {}).filter((key) => key !== "date");
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
 
   function getOpacity(key: string) {
