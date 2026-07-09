@@ -132,12 +132,21 @@ export default async function PrivilegesPage({ searchParams }: Props) {
   ]);
 
   const memberGroups = new Map<string, GroupRef[]>();
+  const memberNameById = new Map((members ?? []).map((member) => [member.id, member.name]));
+  const membersByGroupId = new Map<string, Set<string>>();
   for (const row of ((groupMembers ?? []) as unknown as GroupMemberRow[])) {
     const group = first(row.groups);
     if (!group) continue;
+
     const list = memberGroups.get(row.member_id) ?? [];
     list.push({ id: row.group_id, name: group.name });
     memberGroups.set(row.member_id, list);
+
+    const memberName = memberNameById.get(row.member_id);
+    if (!memberName) continue;
+    const groupMemberNames = membersByGroupId.get(row.group_id) ?? new Set<string>();
+    groupMemberNames.add(memberName);
+    membersByGroupId.set(row.group_id, groupMemberNames);
   }
 
   const allRecords = ((data ?? []) as unknown as RawRecord[]).filter((record) => {
@@ -191,10 +200,18 @@ export default async function PrivilegesPage({ searchParams }: Props) {
   }
 
   const memberNames = [...new Set(records.map((record) => record.member_name))];
+  const trendMemberNames = new Set(memberNames);
   const dailyMap = new Map<string, Record<string, string | number>>();
   for (const record of records) {
     const day = record.event_date.slice(5, 10);
-    const row = dailyMap.get(day) ?? { date: day, ...Object.fromEntries(memberNames.map((member) => [member, 0])) };
+    const row = dailyMap.get(day) ?? { date: day };
+    const targetMemberNames = record.group_id ? membersByGroupId.get(record.group_id) : null;
+
+    for (const memberName of targetMemberNames ?? [record.member_name]) {
+      if (row[memberName] == null) row[memberName] = 0;
+      trendMemberNames.add(memberName);
+    }
+
     row[record.member_name] = Number(row[record.member_name] ?? 0) + record.quantity;
     dailyMap.set(day, row);
   }
@@ -254,11 +271,11 @@ export default async function PrivilegesPage({ searchParams }: Props) {
             <TrendLineChart
               title={`${monthLabel} 공연별 특전 수량 추이`}
               description="공연 날짜 기준 · 멤버별 합산"
-              keys={memberNames}
+              keys={[...trendMemberNames]}
               data={
                 trendData.length
                   ? trendData
-                  : [{ date: "-", ...Object.fromEntries(memberNames.map((member) => [member, 0])) }]
+                  : [{ date: "-", ...Object.fromEntries([...trendMemberNames].map((member) => [member, 0])) }]
               }
             />
           </div>
