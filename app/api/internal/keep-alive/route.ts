@@ -19,10 +19,13 @@ export async function GET(request: Request) {
 }
 
 function hasValidKeepAliveToken(request: Request) {
-  const token = process.env.KEEP_ALIVE_TOKEN;
-  if (!token) return false;
-
   const actual = Buffer.from(request.headers.get("authorization") ?? "");
-  const expected = Buffer.from(`Bearer ${token}`);
-  return actual.length === expected.length && timingSafeEqual(actual, expected);
+  const tokens = [process.env.CRON_SECRET, process.env.KEEP_ALIVE_TOKEN].filter(
+    (token): token is string => Boolean(token),
+  );
+
+  return tokens.some((token) => {
+    const expected = Buffer.from(`Bearer ${token}`);
+    return actual.length === expected.length && timingSafeEqual(actual, expected);
+  });
 }
